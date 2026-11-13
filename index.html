@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>List of Defect - รายงานตรวจบ้าน ครั้งที่ 3</title>
+  <title>List of Defect - รายงานตรวจบ้าน ครั้งที่ 3 (บ้านเลขที่ 162/307)</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Sarabun & Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- html2pdf.js for PDF Generation -->
@@ -19,26 +19,33 @@
   <style>
     body {
       font-family: 'Sarabun', sans-serif;
-      background-color: #f3f4f6;
-      color: #1f2937;
+      background-color: #f1f5f9;
+      color: #0f172a;
     }
-    
     .font-prompt {
       font-family: 'Prompt', sans-serif;
     }
 
-    /* Reference Theme Header Background Color */
-    .bg-report-header {
+    /* Reference Theme Colors */
+    .bg-defect-header {
       background-color: #365f91;
     }
-    .text-report-header {
+    .text-defect-header {
       color: #365f91;
     }
-    .border-report-header {
-      border-color: #365f91;
+
+    /* Reference Table Borders (Black Solid Borders matching inspection sheet) */
+    .border-black-sheet {
+      border: 2px solid #000000;
+    }
+    .border-b-sheet {
+      border-bottom: 2px solid #000000;
+    }
+    .border-r-sheet {
+      border-right: 2px solid #000000;
     }
 
-    /* Realistic Blue Pen Slash Effect for Checkboxes */
+    /* Pen Slash Effect for Checkboxes (PASS / NOT PASS) */
     .pen-slash-box {
       position: relative;
       display: inline-flex;
@@ -46,27 +53,27 @@
       justify-content: center;
       width: 22px;
       height: 22px;
-      border: 2px solid #1e3a8a;
+      border: 1.5px solid #000000;
       background-color: #ffffff;
-      border-radius: 2px;
       cursor: pointer;
       user-select: none;
+      flex-shrink: 0;
     }
     
     .pen-slash-box.checked::after {
       content: '';
       position: absolute;
-      top: -6px;
+      top: -8px;
       left: -4px;
-      width: 30px;
-      height: 30px;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M8,32 L34,8 M10,10 L30,30' stroke='%200055ff' stroke-width='4' stroke-linecap='round' opacity='0.9'/%3E%3C/svg%3E");
+      width: 32px;
+      height: 32px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M6,32 L34,6' stroke='%231d4ed8' stroke-width='4.5' stroke-linecap='round' opacity='0.95'/%3E%3C/svg%3E");
       background-size: contain;
       background-repeat: no-repeat;
       pointer-events: none;
     }
 
-    /* Print styling rules */
+    /* Print & PDF styling rules */
     @media print {
       .no-print {
         display: none !important;
@@ -76,9 +83,9 @@
         padding: 0 !important;
         margin: 0 !important;
       }
-      .page-break-inside-avoid {
-        page-break-inside: avoid;
-        break-inside: avoid;
+      .page-break-avoid {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .report-paper {
         box-shadow: none !important;
@@ -86,8 +93,9 @@
         width: 100% !important;
         max-width: 100% !important;
         padding: 0 !important;
+        border: none !important;
       }
-      .bg-report-header {
+      .bg-defect-header {
         background-color: #365f91 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -98,92 +106,105 @@
 <body class="min-h-screen flex flex-col items-center pb-12">
 
   <!-- ==================== TOP ACTION BAR (EDITOR CONTROLS) ==================== -->
-  <header class="no-print w-full bg-slate-800 text-white shadow-md sticky top-0 z-40">
+  <header class="no-print w-full bg-slate-900 text-white shadow-lg sticky top-0 z-40 border-b border-slate-700">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-clipboard-check text-blue-400 text-2xl"></i>
-        <h1 class="font-prompt font-bold text-lg sm:text-xl tracking-wide">แอพตรวจบ้าน (ครั้งที่ 3)</h1>
-        <span id="sync-status-badge" class="ml-2 text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-          <i class="fa-solid fa-cloud-arrow-up mr-1"></i>กำลังเชื่อมต่อ Cloud...
-        </span>
+      
+      <!-- App Title & Live Sync Status Badge -->
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-house-circle-check text-blue-400 text-2xl"></i>
+        <div>
+          <h1 class="font-prompt font-bold text-base sm:text-lg leading-tight">แอพตรวจบ้าน (ครั้งที่ 3)</h1>
+          <p class="text-[11px] text-slate-400">บ้านเลขที่: <span class="text-amber-300 font-bold">162/307</span></p>
+        </div>
+        <div id="sync-status-badge" class="ml-2 text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 font-medium">
+          <i class="fa-solid fa-spinner fa-spin text-amber-400"></i>
+          <span>กำลังเชื่อมต่อ...</span>
+        </div>
       </div>
 
+      <!-- Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
-        <button id="btn-save" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow-md">
-          <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล (Save)
+        <button id="btn-sync-now" title="ดึงข้อมูลรายการล่าสุดจากเซิร์ฟเวอร์" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 active:scale-95">
+          <i class="fa-solid fa-rotate text-blue-400"></i> ดึงข้อมูลล่าสุด
         </button>
-        <button id="btn-export-pdf" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
-          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        <button id="btn-drive-settings" title="ตั้งค่าฝากรูปใน Google Drive" class="px-3 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 active:scale-95 shadow">
+          <i class="fa-brands fa-google-drive"></i> Google Drive / ตั้งค่าความชัด
         </button>
-        <button id="btn-print" class="px-3 py-2 bg-slate-600 hover:bg-slate-700 active:scale-95 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
-          <i class="fa-solid fa-print"></i> พิมพ์ (Print)
+        <button id="btn-save" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 active:scale-95 shadow-md">
+          <i class="fa-solid fa-floppy-disk"></i> บันทึก (Save)
+        </button>
+        <button id="btn-export-pdf" class="px-3 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 active:scale-95 shadow">
+          <i class="fa-solid fa-file-pdf"></i> PDF
+        </button>
+        <button id="btn-print" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 active:scale-95">
+          <i class="fa-solid fa-print"></i> พิมพ์
         </button>
       </div>
+
     </div>
   </header>
 
-  <!-- Toast Notification Box -->
+  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
 
-  <!-- Main Container -->
+  <!-- Main Work Area Container -->
   <main class="w-full max-w-5xl px-2 sm:px-4 py-6 flex flex-col gap-6">
 
     <!-- ==================== FORM BUILDER PANEL ==================== -->
-    <section class="no-print bg-white rounded-xl shadow-lg border border-slate-200 p-4 sm:p-6 transition-all">
+    <section class="no-print bg-white rounded-xl shadow-md border border-slate-200 p-4 sm:p-6">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-        <h2 class="font-prompt font-semibold text-lg text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-circle-plus text-blue-600"></i> เพิ่มรายการ Defect ใหม่
+        <h2 class="font-prompt font-semibold text-slate-800 text-base sm:text-lg flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-blue-600"></i> เพิ่มรายการ Defect ใหม่
         </h2>
-        <span class="text-xs text-slate-500 font-medium">ข้อมูลจะซิงค์ข้ามเครื่องมือถือและคอมพิวเตอร์อัตโนมัติ</span>
+        <span class="text-xs text-slate-500 font-normal">ข้อมูลซิงค์ตรงกันทั้งมือถือและคอมพิวเตอร์</span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
         
-        <!-- Left: Image Upload & Preview Box -->
+        <!-- Left Column: Photo Upload Box -->
         <div class="md:col-span-4 flex flex-col gap-2">
-          <label class="block text-sm font-semibold text-slate-700">รูปภาพจุดชำรุด (ไม่บังคับ):</label>
+          <label class="block text-xs sm:text-sm font-semibold text-slate-700">รูปภาพจุดชำรุด (ถ่ายภาพ/เลือกไฟล์):</label>
           
-          <div id="drop-zone" class="relative border-2 border-dashed border-slate-300 rounded-lg p-3 flex flex-col items-center justify-center min-h-[150px] bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer group">
+          <div id="drop-zone" class="relative border-2 border-dashed border-slate-300 rounded-lg p-3 flex flex-col items-center justify-center min-h-[160px] bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer group">
             <input type="file" id="image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
             
             <div id="upload-placeholder" class="text-center flex flex-col items-center pointer-events-none">
-              <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition">
-                <i class="fa-solid fa-camera text-lg"></i>
+              <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                <i class="fa-solid fa-camera text-xl"></i>
               </div>
-              <p class="text-xs font-semibold text-slate-700">คลิกหรือแนบรูปถ่ายจากมือถือ</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">บีบอัดรูปให้เล็กเพื่อซิงค์ได้รวดเร็ว</p>
+              <p class="text-xs font-semibold text-slate-700">แตะเพื่อถ่ายรูป หรือแนบภาพจากมือถือ</p>
+              <p id="current-quality-label" class="text-[11px] text-slate-500 mt-1">โหมดภาพ: คมชัดสูง HD (1200px)</p>
             </div>
 
-            <div id="upload-preview-container" class="hidden relative w-full h-36 flex items-center justify-center bg-black/5 rounded overflow-hidden">
+            <div id="upload-preview-container" class="hidden relative w-full h-40 flex items-center justify-center bg-black/5 rounded overflow-hidden">
               <img id="upload-preview-img" src="" alt="Preview" class="max-h-full max-w-full object-contain" />
-              <button id="btn-remove-preview" type="button" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-700 z-20">
+              <button id="btn-remove-preview" type="button" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow hover:bg-rose-700 z-20">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Right: Text & Details Input -->
+        <!-- Right Column: Details & Fast-Preset Selectors -->
         <div class="md:col-span-8 flex flex-col justify-between gap-3">
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="input-area" class="block text-sm font-semibold text-slate-700 mb-1">บริเวณ / หมวดงาน:</label>
-              <select id="input-area" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="งานทั่วไป">งานทั่วไป</option>
+              <label for="input-area" class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">บริเวณ / หมวดงาน:</label>
+              <select id="input-area" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
                 <option value="งานหลังคา">งานหลังคา</option>
-                <option value="งานสี">งานสี / งานผนัง</option>
+                <option value="งานสี">งานสี / ผนัง</option>
                 <option value="งานระบบไฟฟ้า">งานระบบไฟฟ้า</option>
                 <option value="งานระบบสุขาภิบาล">งานระบบสุขาภิบาล</option>
                 <option value="งานฝ้าเพดาน">งานฝ้าเพดาน</option>
                 <option value="งานประตู-หน้าต่าง">งานประตู-หน้าต่าง</option>
                 <option value="งานพื้น-กระเบื้อง">งานพื้น-กระเบื้อง</option>
-                <option value="งานภายนอก">งานภายนอก/โครงสร้าง</option>
+                <option value="งานทั่วไป">งานทั่วไป</option>
               </select>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-1">ข้อความลัดยอดนิยม:</label>
+              <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">ข้อความลัดยอดนิยม:</label>
               <select id="quick-preset" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 <option value="">-- เลือกข้อความสำเร็จรูป --</option>
                 <option value="พบแผ่นครอบหน้าหลังคา เสมือนยิงสกรูไม่ครบ ตรวจสอบการติดตั้ง แก้ไขยิงสกรูให้ครบ">พบแผ่นครอบหน้าหลังคายิงสกรูไม่ครบ</option>
@@ -198,18 +219,18 @@
           </div>
 
           <div>
-            <label for="input-comment" class="block text-sm font-semibold text-slate-700 mb-1">รายละเอียดจุด Defect และคำอธิบาย:</label>
-            <textarea id="input-comment" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-slate-400" placeholder="พิมพ์รายละเอียดจุดที่ต้องแก้ไข..."></textarea>
+            <label for="input-comment" class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">รายละเอียดจุด Defect และคำอธิบาย:</label>
+            <textarea id="input-comment" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-slate-400" placeholder="พิมพ์รายละเอียดจุดที่ต้องแก้ไข..."></textarea>
           </div>
 
           <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-slate-600">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-slate-700">
               <input type="checkbox" id="input-closing-text" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
-              <span>แสดงข้อความท้าย: <u>พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง</u></span>
+              <span>แสดงข้อความท้าย: <u class="font-semibold">พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง</u></span>
             </label>
 
             <button id="add-item-btn" type="button" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-prompt font-semibold rounded-lg shadow-md transition flex items-center gap-2 text-sm sm:text-base">
-              <i class="fa-solid fa-plus-circle text-lg"></i> เพิ่มรายการลงใบรายงาน
+              <i class="fa-solid fa-plus-circle text-lg"></i> เพิ่มรายการลงในตาราง
             </button>
           </div>
 
@@ -218,84 +239,80 @@
       </div>
     </section>
 
-    <!-- ==================== REPORT DOCUMENT CONTAINER (PAPER LOOK) ==================== -->
-    <div id="report-paper" class="report-paper w-full bg-white shadow-2xl rounded-sm border border-slate-300 p-4 sm:p-8 flex flex-col gap-0 text-slate-900">
+    <!-- ==================== REPORT DOCUMENT CONTAINER (EXACT IMAGE REPRODUCTION) ==================== -->
+    <div id="report-paper" class="report-paper w-full bg-white shadow-2xl border-black-sheet p-0 flex flex-col text-black">
       
-      <!-- TOP BANNER -->
-      <div class="bg-report-header text-white text-center py-3.5 px-2 font-prompt font-bold text-2xl sm:text-3xl tracking-wider rounded-t-sm shadow-inner">
+      <!-- ROW 1: TITLE BANNER -->
+      <div class="bg-defect-header text-white text-center py-2 px-2 font-prompt font-bold text-2xl sm:text-3xl tracking-wide border-b-sheet">
         <span class="underline underline-offset-4 decoration-2">List of Defect</span>
       </div>
 
-      <!-- SUB-HEADER INFO BAR -->
-      <div class="bg-report-header text-white px-4 py-3 text-xs sm:text-sm border-t border-blue-400/30 flex flex-wrap items-center justify-between gap-y-2">
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-1 w-full sm:w-auto">
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold">Project :</span>
-            <input type="text" id="meta-project" value="เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์" class="bg-transparent border-b border-white/50 focus:border-white focus:outline-none px-1 text-white font-medium text-xs sm:text-sm w-56 sm:w-72" />
+      <!-- ROW 2: METADATA GRID (EXACT LAYOUT TO IMAGE) -->
+      <div class="bg-defect-header text-white text-xs sm:text-sm font-bold border-b-sheet">
+        <div class="grid grid-cols-12 border-slate-300">
+          
+          <!-- Left Metadata Column -->
+          <div class="col-span-7 sm:col-span-6 p-2 border-r border-white/40 flex flex-col gap-1">
+            <div class="flex items-center gap-1">
+              <span>Project :</span>
+              <input type="text" id="meta-project" value="เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์" class="bg-transparent border-b border-white/40 focus:border-white focus:outline-none px-1 text-white font-bold w-full text-xs sm:text-sm" />
+            </div>
+            <div class="flex items-center gap-1">
+              <span>Date :</span>
+              <input type="text" id="meta-date" placeholder="18-10-2569" class="bg-transparent border-b border-white/40 focus:border-white focus:outline-none px-1 text-white font-bold w-36 text-xs sm:text-sm" />
+            </div>
           </div>
-          <div class="flex items-center gap-1">
-            <span class="font-bold">No :</span>
-            <span class="font-semibold bg-white/20 px-2 py-0.5 rounded">3</span>
-          </div>
-        </div>
 
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-1 w-full sm:w-auto">
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold">บ้านเลขที่ :</span>
-            <!-- Locked Read-only house number -->
-            <span class="font-bold text-amber-300 bg-black/20 px-2 py-0.5 rounded border border-amber-300/40">162/307</span>
+          <!-- Right Metadata Column (Locked Specs) -->
+          <div class="col-span-5 sm:col-span-6 p-2 flex flex-col gap-1 justify-between">
+            <div class="flex items-center justify-between">
+              <span>No :</span>
+              <span class="font-bold text-amber-300 bg-black/20 px-2 py-0.5 rounded border border-amber-300/30">ครั้งที่ 3</span>
+              <span class="ml-2">บ้านเลขที่ :</span>
+              <span class="font-bold text-amber-300 bg-black/20 px-2 py-0.5 rounded border border-amber-300/30">162/307</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span>Customer Name :</span>
+              <span class="font-bold text-white bg-black/20 px-2 py-0.5 rounded">k. วรวิช ,ปิยวรรณ</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold">Date :</span>
-            <input type="date" id="meta-date" class="bg-white/10 text-white border border-white/30 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:bg-white focus:text-slate-900 transition" />
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold">Customer Name :</span>
-            <!-- Locked Read-only Customer Name -->
-            <span class="font-bold text-white bg-black/20 px-2 py-0.5 rounded">k. วรวิช ,ปิยวรรณ</span>
-          </div>
+
         </div>
       </div>
 
-      <!-- TWO-COLUMN TABLE HEADER -->
-      <div class="bg-report-header text-white font-prompt font-bold text-sm sm:text-base flex border-t border-white/30 text-center uppercase tracking-wide">
-        <div class="w-[40%] py-2.5 px-2 border-r border-white/30">
+      <!-- ROW 3: COLUMN HEADERS -->
+      <div class="bg-defect-header text-white font-prompt font-bold text-xs sm:text-base flex border-b-sheet text-center uppercase tracking-wider">
+        <div class="w-[38%] py-2 px-2 border-r-sheet">
           <span class="underline underline-offset-2">ITEM</span>
         </div>
-        <div class="w-[60%] py-2.5 px-2">
+        <div class="w-[62%] py-2 px-2">
           <span class="underline underline-offset-2">DESCRIPTION OF DEFECT AND COMMENT</span>
         </div>
       </div>
 
-      <!-- ITEMS LIST CONTAINER -->
-      <div id="defect-items-list" class="flex flex-col min-h-[400px]">
-        <!-- Dynamically rendered rows will appear here -->
-      </div>
-
-      <!-- REPORT FOOTER SUMMARY -->
-      <div class="mt-6 pt-4 border-t border-slate-300 flex flex-wrap justify-between items-center text-xs text-slate-500 no-print">
-        <span>จำนวนรายการทั้งหมด: <strong id="total-count-badge" class="text-blue-600">0</strong> รายการ</span>
-        <span>แอพตรวจบ้าน ครั้งที่ 3 - เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์ (162/307)</span>
+      <!-- DEFECT ITEMS CONTAINER -->
+      <div id="defect-items-list" class="flex flex-col min-h-[350px]">
+        <!-- Dynamic defect rows generated by JS -->
       </div>
 
     </div>
   </main>
 
-  <!-- ==================== RED ANNOTATION MARKUP MODAL ==================== -->
-  <div id="annotation-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-2 sm:p-4 no-print">
-    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+  <!-- ==================== RED MARKUP ANNOTATION MODAL ==================== -->
+  <div id="annotation-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-2 sm:p-4 no-print">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[95vh] overflow-hidden">
       
-      <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
+      <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center">
         <h3 class="font-prompt font-semibold text-base sm:text-lg flex items-center gap-2">
-          <i class="fa-solid fa-pen-ruler text-rose-400"></i> วงกลมสีแดงชี้จุดเสีย / วาดภาพระบุตำแหน่ง
+          <i class="fa-solid fa-circle-dot text-rose-500"></i> วาดวงกลมสีแดงชี้จุดเสียในรูปภาพ
         </h3>
         <button id="btn-close-annotation" class="text-slate-400 hover:text-white text-xl">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div class="p-2 sm:p-4 bg-slate-900 flex-1 flex items-center justify-center overflow-auto relative min-h-[300px]">
-        <canvas id="annotation-canvas" class="max-w-full max-h-[60vh] bg-black shadow-lg cursor-crosshair rounded border border-slate-700"></canvas>
+      <div class="p-2 sm:p-4 bg-slate-950 flex-1 flex items-center justify-center overflow-auto relative min-h-[300px]">
+        <canvas id="annotation-canvas" class="max-w-full max-h-[65vh] bg-black shadow-lg cursor-crosshair rounded border border-slate-700"></canvas>
       </div>
 
       <!-- Markup Tools Toolbar -->
@@ -308,15 +325,15 @@
             <i class="fa-solid fa-arrow-right"></i> ลูกศร
           </button>
           <button id="tool-freehand" class="px-3 py-1.5 bg-slate-700 text-white text-xs font-semibold rounded shadow hover:bg-slate-800 flex items-center gap-1">
-            <i class="fa-solid fa-paintbrush"></i> วาดอิสระ
+            <i class="fa-solid fa-paintbrush"></i> อิสระ
           </button>
-          <button id="btn-undo-draw" class="px-2.5 py-1.5 bg-slate-300 text-slate-700 text-xs font-semibold rounded hover:bg-slate-400 flex items-center gap-1 ml-2">
+          <button id="btn-undo-draw" class="px-2.5 py-1.5 bg-slate-300 text-slate-800 text-xs font-semibold rounded hover:bg-slate-400 flex items-center gap-1 ml-2">
             <i class="fa-solid fa-rotate-left"></i> ย้อนกลับ
           </button>
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btn-cancel-annotation" class="px-4 py-1.5 bg-slate-300 text-slate-700 text-xs font-semibold rounded hover:bg-slate-400">
+          <button id="btn-cancel-annotation" class="px-4 py-1.5 bg-slate-300 text-slate-800 text-xs font-semibold rounded hover:bg-slate-400">
             ยกเลิก
           </button>
           <button id="btn-save-annotation" class="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded shadow hover:bg-blue-700 flex items-center gap-1">
@@ -328,38 +345,127 @@
     </div>
   </div>
 
-  <!-- Inline File Input for Direct Photo Replacement in Table Rows -->
+  <!-- ==================== GOOGLE DRIVE & QUALITY SETTINGS MODAL ==================== -->
+  <div id="drive-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-3 sm:p-4 no-print">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <div class="bg-emerald-800 text-white px-4 py-3 flex justify-between items-center">
+        <h3 class="font-prompt font-semibold text-base sm:text-lg flex items-center gap-2">
+          <i class="fa-brands fa-google-drive"></i> ตั้งค่าความคมชัดรูปภาพ & Google Drive
+        </h3>
+        <button id="btn-close-drive-modal" class="text-emerald-200 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-6 overflow-y-auto flex flex-col gap-5 text-slate-800 text-xs sm:text-sm">
+        
+        <!-- Quality Setting -->
+        <div class="flex flex-col gap-2 border-b border-slate-200 pb-4">
+          <label class="font-prompt font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-emerald-600"></i> เลือกโหมดความคมชัดของรูปถ่าย:
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+            <label class="border border-slate-300 rounded-lg p-3 cursor-pointer hover:border-emerald-500 flex items-start gap-2 bg-slate-50">
+              <input type="radio" name="quality-mode" value="1200" checked class="mt-0.5 text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <p class="font-bold text-slate-800">HD 1200px (แนะนำ)</p>
+                <p class="text-[11px] text-slate-500">ภาพคมชัดสูงมากเมื่อ Export เป็น PDF เหมาะสำหรับส่งมอบงาน</p>
+              </div>
+            </label>
+            <label class="border border-slate-300 rounded-lg p-3 cursor-pointer hover:border-emerald-500 flex items-start gap-2 bg-slate-50">
+              <input type="radio" name="quality-mode" value="800" class="mt-0.5 text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <p class="font-bold text-slate-800">มาตรฐาน 800px</p>
+                <p class="text-[11px] text-slate-500">ขนาดไฟล์เล็ก ซิงค์ผ่านอินเทอร์เน็ตมือถือได้รวดเร็วที่สุด</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Google Drive Integration -->
+        <div class="flex flex-col gap-3">
+          <label class="font-prompt font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-brands fa-google-drive text-emerald-600 text-lg"></i> เชื่อมต่อ Google Drive Web App URL (ตัวเลือกเสริม):
+          </label>
+          <p class="text-xs text-slate-600">
+            ใส่ลิงก์ Google Apps Script Web App เพื่อบันทึกรูปภาพต้นฉบับเต็มลงโฟลเดอร์ Google Drive ของคุณโดยอัตโนมัติ
+          </p>
+          <input type="url" id="drive-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          
+          <!-- Instructions accordion -->
+          <details class="bg-slate-50 rounded-lg border border-slate-200 p-3">
+            <summary class="font-semibold text-emerald-700 cursor-pointer text-xs flex items-center gap-1">
+              <i class="fa-solid fa-code"></i> วิธีสร้างโค้ด Google Apps Script ใช้งานฟรีใน 1 นาที (คลิกอ่าน)
+            </summary>
+            <div class="mt-3 text-[12px] text-slate-700 flex flex-col gap-2 pl-2 border-l-2 border-emerald-500">
+              <p>1. ไปที่ <a href="https://script.google.com" target="_blank" class="text-blue-600 underline">script.google.com</a> กด <strong>New Project</strong></p>
+              <p>2. คัดลอกโค้ดนี้วางแทนที่โค้ดเดิมทั้งหมด:</p>
+              <pre class="bg-slate-900 text-emerald-400 p-2 rounded text-[10px] overflow-x-auto select-all">
+function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var folderName = "Defect_162_307_ครั้งที่3";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  var contentType = data.image.substring(5, data.image.indexOf(';'));
+  var bytes = Utilities.base64Decode(data.image.substring(data.image.indexOf('base64,') + 7));
+  var blob = Utilities.newBlob(bytes, contentType, data.filename || "defect_photo.jpg");
+  var file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return ContentService.createTextOutput(JSON.stringify({ status: "success", fileUrl: file.getUrl() })).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+              <p>3. กด <strong>Deploy > New deployment</strong> เลือก type เป็น <strong>Web app</strong></p>
+              <p>4. ตั้งค่า <i>Who has access</i> เป็น <strong>Anyone</strong> แล้วกด Deploy จากนั้นคัดลอก URL นำมาวางในช่องด้านบน</p>
+            </div>
+          </details>
+        </div>
+
+      </div>
+
+      <div class="p-3 bg-slate-100 border-t border-slate-200 flex justify-end gap-2">
+        <button id="btn-save-drive-settings" class="px-5 py-2 bg-emerald-700 text-white font-semibold rounded-lg shadow hover:bg-emerald-600 text-xs sm:text-sm">
+          บันทึกการตั้งค่า
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Inline File Replacer Input -->
   <input type="file" id="row-file-replacer" accept="image/*" class="hidden" />
 
-  <!-- ==================== FIREBASE FIRESTORE MODULE ==================== -->
+  <!-- ==================== FIREBASE REALTIME & LOCAL QUEUE MODULE ==================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Application Constants & Configuration
+    // Application Constants
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'defect-house-162-307';
-    const STORAGE_KEY = 'defect_report_v3_data_162_307';
-
-    // Strict Firestore Collections & Documents
-    // Public path: /artifacts/{appId}/public/data/{collectionName}
-    const META_COLLECTION = 'house_162_307_meta';
-    const META_DOC_ID = 'config';
+    const LOCAL_STORAGE_KEY = 'defect_report_162_307_v3';
     const ITEMS_COLLECTION = 'house_162_307_items';
+    const META_COLLECTION = 'house_162_307_meta';
+    const META_DOC_ID = 'main';
 
     let db = null;
     let auth = null;
     let currentUser = null;
-    let isCloudActive = false;
+    let isCloudOnline = false;
 
-    // Global State
+    // Config Settings
+    let appSettings = {
+      qualityMaxWidth: 1200,
+      driveScriptUrl: localStorage.getItem('drive_script_url') || ''
+    };
+
+    // Main App State
     let state = {
       meta: {
         project: "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
-        no: "3",
-        houseNo: "162/307", // Locked
+        no: "ครั้งที่ 3",
+        houseNo: "162/307",
         date: "",
-        customerName: "k. วรวิช ,ปิยวรรณ" // Locked
+        customerName: "k. วรวิช ,ปิยวรรณ"
       },
       items: []
     };
@@ -367,7 +473,7 @@
     let selectedImageDataUrl = null;
     let activeAnnotateItemId = null;
 
-    // Canvas Markup State
+    // Canvas Draw State
     let canvas, ctx;
     let isDrawing = false;
     let startX = 0, startY = 0;
@@ -375,27 +481,23 @@
     let baseImage = null;
     let drawHistory = [];
 
-    // ==================== UI & TOAST HELPERS ====================
+    // ==================== UI & TOAST NOTIFICATIONS ====================
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
       const toast = document.createElement('div');
-      const bgColors = {
-        success: 'bg-emerald-700 text-white shadow-emerald-900/20',
-        error: 'bg-rose-700 text-white shadow-rose-900/20',
-        info: 'bg-slate-800 text-white border border-slate-600 shadow-slate-900/30'
+      const colors = {
+        success: 'bg-emerald-700 text-white shadow-emerald-900/30',
+        error: 'bg-rose-700 text-white shadow-rose-900/30',
+        info: 'bg-slate-900 text-white border border-slate-700 shadow-slate-950/40'
       };
 
-      toast.className = `px-4 py-2.5 rounded-lg shadow-xl text-xs sm:text-sm font-prompt font-medium transition-all transform translate-y-2 opacity-0 flex items-center gap-2 pointer-events-auto ${bgColors[type] || bgColors.info}`;
+      toast.className = `px-4 py-2.5 rounded-lg shadow-xl text-xs sm:text-sm font-prompt font-medium transition-all transform translate-y-2 opacity-0 flex items-center gap-2 pointer-events-auto ${colors[type] || colors.info}`;
       toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i> ${message}`;
       
       container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 10);
-
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
@@ -407,19 +509,19 @@
       if (!badge) return;
 
       if (status === 'synced') {
-        badge.className = 'ml-2 text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium';
-        badge.innerHTML = `<i class="fa-solid fa-cloud-check mr-1 text-emerald-400"></i>${text || 'ซิงค์กับ Cloud เรียบร้อย'}`;
-      } else if (status === 'saving') {
-        badge.className = 'ml-2 text-xs px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-medium animate-pulse';
-        badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-400"></i>${text || 'กำลังบันทึก...'}`;
+        badge.className = 'ml-2 text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium flex items-center gap-1.5';
+        badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${text || '🟢 ออนไลน์ (ซิงค์เรียบร้อย)'}`;
+      } else if (status === 'syncing') {
+        badge.className = 'ml-2 text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-medium flex items-center gap-1.5 animate-pulse';
+        badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-blue-400"></i> ${text || 'กำลังส่งข้อมูลขึ้น Cloud...'}`;
       } else {
-        badge.className = 'ml-2 text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium';
-        badge.innerHTML = `<i class="fa-solid fa-hard-drive mr-1"></i>${text || 'โหมดสแตนดาร์ด'}`;
+        badge.className = 'ml-2 text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-medium flex items-center gap-1.5';
+        badge.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-400"></i> ${text || 'โหมดสแตนดาร์ด'}`;
       }
     }
 
-    // High Quality Image Compression for Mobile Bandwidth & Firestore optimization
-    function compressImageFile(file, maxWidth = 550, quality = 0.60) {
+    // High Quality Image Compression Function
+    function compressImageFile(file, maxWidth = 1200, quality = 0.70) {
       return new Promise((resolve, reject) => {
         if (!file || !file.type.startsWith('image/')) {
           reject(new Error("ไฟล์ไม่ใช่รูปภาพ"));
@@ -448,7 +550,7 @@
               const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
               resolve(compressedDataUrl);
             } catch (err) {
-              console.warn("Image compression failed, using original fallback", err);
+              console.warn("Canvas compression fallback to original DataURL:", err);
               resolve(e.target.result);
             }
           };
@@ -460,30 +562,51 @@
       });
     }
 
-    // ==================== RENDERING LOGIC ====================
+    // Optional Upload to Google Drive Web App
+    async function uploadToGoogleDrive(imageDataUrl, filename) {
+      if (!appSettings.driveScriptUrl) return null;
+      try {
+        showToast("กำลังส่งรูปภาพลง Google Drive...", "info");
+        const response = await fetch(appSettings.driveScriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            image: imageDataUrl,
+            filename: filename || `defect_${Date.now()}.jpg`
+          })
+        });
+        const resData = await response.json();
+        if (resData && resData.fileUrl) {
+          showToast("สำเนารูปภาพลง Google Drive เรียบร้อยแล้ว", "success");
+          return resData.fileUrl;
+        }
+      } catch (err) {
+        console.warn("Google Drive Upload Error:", err);
+      }
+      return null;
+    }
+
+    // ==================== REPORT RENDERER (FAITHFUL TO ATTACHED PHOTO) ====================
     function renderReport() {
       const container = document.getElementById('defect-items-list');
-      const countBadge = document.getElementById('total-count-badge');
       if (!container) return;
 
-      if (countBadge) countBadge.textContent = state.items.length;
-
-      // Update meta DOM elements safely
-      const projectInput = document.getElementById('meta-project');
+      // Update Header Metadata inputs
       const dateInput = document.getElementById('meta-date');
-      if (projectInput && state.meta.project && document.activeElement !== projectInput) {
-        projectInput.value = state.meta.project;
-      }
+      const projInput = document.getElementById('meta-project');
       if (dateInput && state.meta.date && document.activeElement !== dateInput) {
         dateInput.value = state.meta.date;
+      }
+      if (projInput && state.meta.project && document.activeElement !== projInput) {
+        projInput.value = state.meta.project;
       }
 
       if (state.items.length === 0) {
         container.innerHTML = `
-          <div class="py-14 px-4 text-center text-slate-400 font-prompt border-b border-slate-200">
+          <div class="py-12 px-4 text-center text-slate-400 font-prompt border-b-sheet">
             <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
-            <p class="text-sm font-semibold">ยังไม่มีรายการ Defect ในใบรายงานนี้</p>
-            <p class="text-xs text-slate-400 mt-1">แนบรูปภาพ หรือพิมพ์ข้อความในฟอร์มด้านบน แล้วกด "+ เพิ่มรายการลงใบรายงาน"</p>
+            <p class="text-sm font-semibold text-slate-600">ยังไม่มีรายการ Defect ในใบรายงานนี้</p>
+            <p class="text-xs text-slate-400 mt-1">แนบรูปภาพ หรือพิมพ์ข้อความในฟอร์มด้านบน แล้วกด "+ เพิ่มรายการลงในตาราง"</p>
           </div>
         `;
         return;
@@ -496,81 +619,84 @@
         const isPass = item.status === 'PASS';
         const isNotPass = item.status === 'NOT_PASS';
 
+        // Prepare Description text with auto-underlined closing phrase
+        let descHtml = item.description || '';
+        const closingPhrase = "พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง";
+        if (item.showClosingText !== false && !descHtml.includes(closingPhrase)) {
+          descHtml = descHtml ? `${descHtml} <u class="font-bold underline decoration-slate-900">${closingPhrase}</u>` : `<u class="font-bold underline decoration-slate-900">${closingPhrase}</u>`;
+        } else if (descHtml.includes(closingPhrase)) {
+          descHtml = descHtml.replace(closingPhrase, `<u class="font-bold underline decoration-slate-900">${closingPhrase}</u>`);
+        }
+
         html += `
-          <div class="page-break-inside-avoid flex flex-col border-b border-slate-300" data-item-id="${item.id}">
+          <div class="page-break-avoid flex flex-col border-b-sheet" data-item-id="${item.id}">
             
-            <!-- Item Content Row -->
-            <div class="flex min-h-[180px]">
+            <!-- Main Row Split 38% / 62% -->
+            <div class="flex min-h-[190px]">
               
-              <!-- Left Column: Image (40% width) -->
-              <div class="w-[40%] p-2 sm:p-3 border-r border-slate-300 flex flex-col items-center justify-center bg-slate-50/50 relative group">
+              <!-- LEFT CELL: Defect Image (38% width, black right border) -->
+              <div class="w-[38%] p-1 sm:p-2 border-r-sheet flex flex-col items-center justify-center bg-white relative group">
                 ${item.image ? `
-                  <div class="relative w-full h-full min-h-[140px] flex items-center justify-center overflow-hidden rounded border border-slate-200 bg-black/5">
-                    <img src="${item.image}" alt="Defect Photo ${itemNumber}" class="max-h-52 max-w-full object-contain" />
+                  <div class="relative w-full h-full min-h-[140px] flex items-center justify-center overflow-hidden border border-slate-300">
+                    <img src="${item.image}" alt="Defect Photo ${itemNumber}" class="max-h-56 max-w-full object-contain cursor-pointer" onclick="window.openMarkupModal('${item.id}')" />
                     
-                    <!-- Action Overlay Buttons -->
-                    <div class="no-print absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
-                      <button onclick="window.openMarkupModal('${item.id}')" title="วงกลมสีแดงชี้จุดเสีย" class="px-2.5 py-1 bg-rose-600 text-white rounded text-xs font-semibold hover:bg-rose-700 flex items-center gap-1 shadow">
+                    <!-- Action Overlay Buttons (Hidden in print) -->
+                    <div class="no-print absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-wrap items-center justify-center gap-1.5 p-1">
+                      <button onclick="window.openMarkupModal('${item.id}')" title="วงกลมสีแดงชี้จุดเสีย" class="px-2 py-1 bg-rose-600 text-white rounded text-[11px] font-semibold hover:bg-rose-700 flex items-center gap-1 shadow">
                         <i class="fa-regular fa-circle"></i> วาดจุดเสีย
                       </button>
-                      <button onclick="window.triggerReplacePhoto('${item.id}')" title="เปลี่ยนรูป" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 shadow">
-                        <i class="fa-solid fa-camera"></i> เปลี่ยน
+                      <button onclick="window.triggerReplacePhoto('${item.id}')" title="เปลี่ยนรูป" class="px-2 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-700 shadow">
+                        <i class="fa-solid fa-camera"></i> เปลี่ยนรูป
                       </button>
                     </div>
                   </div>
                 ` : `
-                  <!-- Placeholder Box when photo is not attached -->
-                  <div onclick="window.triggerReplacePhoto('${item.id}')" class="no-print w-full h-36 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition cursor-pointer p-2 text-center">
+                  <!-- Placeholder Box -->
+                  <div onclick="window.triggerReplacePhoto('${item.id}')" class="no-print w-full h-36 border-2 border-dashed border-slate-300 rounded flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/40 transition cursor-pointer p-2 text-center">
                     <i class="fa-solid fa-camera text-2xl mb-1 text-slate-400"></i>
-                    <span class="text-xs font-semibold">+ คลิกเพื่อแนบรูปภาพ</span>
+                    <span class="text-xs font-semibold">+ คลิกแนบรูปภาพ</span>
                   </div>
-                  <div class="print:block hidden w-full h-32 border border-slate-200 bg-slate-100 flex items-center justify-center text-xs text-slate-400 italic">
+                  <div class="print:block hidden w-full h-32 border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400 italic">
                     (ไม่มีรูปภาพแนบ)
                   </div>
                 `}
               </div>
 
-              <!-- Right Column: Description & Inspection Checkboxes (60% width) -->
-              <div class="w-[60%] p-3 sm:p-4 flex flex-col justify-between relative">
+              <!-- RIGHT CELL: Description & Status (62% width) -->
+              <div class="w-[62%] p-3 sm:p-4 flex flex-col justify-between bg-white relative">
                 
                 <!-- Action Controls (Delete) -->
-                <div class="no-print absolute top-2 right-2 flex items-center gap-1.5 opacity-80 hover:opacity-100">
+                <div class="no-print absolute top-2 right-2 flex items-center gap-1 opacity-70 hover:opacity-100">
                   <button onclick="window.deleteDefectItem('${item.id}')" title="ลบรายการนี้" class="text-slate-400 hover:text-rose-600 p-1 text-sm transition">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </div>
 
-                <!-- Text Area / Comment Body -->
+                <!-- Text Description Body -->
                 <div class="flex-1 pr-6 flex flex-col justify-center">
-                  <div class="text-sm sm:text-base text-slate-800 leading-relaxed font-normal whitespace-pre-line border border-transparent hover:border-slate-300 focus:border-blue-500 rounded p-1 transition" contenteditable="true" onblur="window.updateItemDescription('${item.id}', this.innerText)">${item.description || 'ระบุรายละเอียด...'}</div>
-
-                  ${item.showClosingText !== false ? `
-                    <p class="mt-2 text-xs sm:text-sm text-slate-900 font-semibold">
-                      <u>พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง</u>
-                    </p>
-                  ` : ''}
+                  <div class="text-sm sm:text-base text-slate-900 leading-relaxed font-normal whitespace-pre-line border border-transparent hover:border-slate-300 rounded p-1 transition focus:outline-none" contenteditable="true" onblur="window.updateItemDescription('${item.id}', this.innerHTML)">${descHtml}</div>
                 </div>
 
-                <!-- Bottom Inspection & Area Zone -->
+                <!-- Bottom Status & Area Zone (Faithful to Image) -->
                 <div class="mt-4 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
                   
-                  <!-- Checkboxes with Pen Slash Effect -->
-                  <div class="flex items-center gap-6 font-bold text-slate-800">
-                    <div onclick="window.toggleDefectStatus('${item.id}', 'PASS')" class="flex items-center gap-2 cursor-pointer select-none group">
+                  <!-- Checkboxes with Pen Slash SVG stroke -->
+                  <div class="flex items-center gap-6 font-bold text-slate-900">
+                    <div onclick="window.toggleDefectStatus('${item.id}', 'PASS')" class="flex items-center gap-2 cursor-pointer select-none">
                       <div class="pen-slash-box ${isPass ? 'checked' : ''}"></div>
-                      <span class="${isPass ? 'text-blue-700 font-bold' : ''}">PASS</span>
+                      <span class="${isPass ? 'text-blue-700 font-extrabold' : ''}">PASS</span>
                     </div>
 
-                    <div onclick="window.toggleDefectStatus('${item.id}', 'NOT_PASS')" class="flex items-center gap-2 cursor-pointer select-none group">
+                    <div onclick="window.toggleDefectStatus('${item.id}', 'NOT_PASS')" class="flex items-center gap-2 cursor-pointer select-none">
                       <div class="pen-slash-box ${isNotPass ? 'checked' : ''}"></div>
-                      <span class="${isNotPass ? 'text-rose-700 font-bold' : ''}">NOT PASS</span>
+                      <span class="${isNotPass ? 'text-rose-700 font-extrabold' : ''}">NOT PASS</span>
                     </div>
                   </div>
 
                   <!-- Location Area Tag -->
-                  <div class="text-slate-600 font-medium text-xs">
+                  <div class="text-slate-700 font-medium text-xs">
                     <span>บริเวณ :</span>
-                    <span class="font-semibold text-slate-800 border-b border-dotted border-slate-400 px-1 hover:bg-amber-50 cursor-text" contenteditable="true" onblur="window.updateItemArea('${item.id}', this.innerText)">${item.area || 'งานทั่วไป'}</span>
+                    <span class="font-semibold text-slate-900 border-b border-dotted border-slate-400 px-1 hover:bg-amber-50 cursor-text" contenteditable="true" onblur="window.updateItemArea('${item.id}', this.innerText)">${item.area || 'งานหลังคา'}</span>
                   </div>
 
                 </div>
@@ -579,9 +705,10 @@
 
             </div>
 
-            <!-- Grey Separator Bar with Item Number -->
-            <div class="bg-slate-300 text-slate-800 font-prompt font-bold text-center text-xs py-1 uppercase tracking-wider border-t border-slate-300">
-              ${itemNumber}
+            <!-- GREY SUB-ROW WITH ITEM NUMBER (MATCHING REFERENCE IMAGE) -->
+            <div class="bg-[#d9d9d9] text-black font-prompt font-bold text-xs py-0.5 px-3 uppercase tracking-wider border-t-sheet flex items-center justify-between">
+              <span>${itemNumber}</span>
+              ${item.synced === false ? `<span class="no-print text-[10px] text-amber-800 bg-amber-200 px-1.5 rounded font-normal"><i class="fa-solid fa-clock"></i> รอซิงค์</span>` : ''}
             </div>
 
           </div>
@@ -591,7 +718,7 @@
       container.innerHTML = html;
     }
 
-    // ==================== FIREBASE REALTIME SYNC ENGINE ====================
+    // ==================== FIREBASE FIRESTORE ENGINE WITH UNSYNCED QUEUE ====================
     async function initFirebaseSync() {
       try {
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
@@ -600,51 +727,74 @@
           db = getFirestore(app);
           auth = getAuth(app);
 
-          // Rule 3: Auth Before Queries
+          // CRITICAL FIX: Auth try/catch fallback to signInAnonymously to ensure cross-device access
           const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-          if (initialToken) {
-            await signInWithCustomToken(auth, initialToken);
-          } else {
+          try {
+            if (initialToken) {
+              await signInWithCustomToken(auth, initialToken);
+            } else {
+              await signInAnonymously(auth);
+            }
+          } catch (authErr) {
+            console.warn("Custom token auth failed, falling back to anonymous auth:", authErr);
             await signInAnonymously(auth);
           }
 
           currentUser = auth.currentUser;
           if (currentUser) {
-            isCloudActive = true;
+            isCloudOnline = true;
+            // Push any unsynced local queue items FIRST before loading remote
+            await pushUnsyncedQueueToCloud();
             setupSnapshotListeners();
             return;
           }
         }
       } catch (err) {
-        console.warn("Firestore initialization failed, using LocalStorage:", err);
+        console.warn("Firebase initialization error, fallback to local storage:", err);
       }
-      
-      // Fallback to LocalStorage if Cloud is unavailable
-      isCloudActive = false;
+
+      isCloudOnline = false;
       updateSyncBadge('local', 'โหมดออฟไลน์ (Local)');
       loadLocalData();
       renderReport();
     }
 
-    function setupSnapshotListeners() {
-      if (!db || !currentUser) return;
+    // Push local unsynced queue to cloud so items added on mobile are NEVER lost
+    async function pushUnsyncedQueueToCloud() {
+      if (!isCloudOnline || !db) return;
+      loadLocalData();
 
-      // 1. Listen for Header Meta Changes (Project, Date, etc.)
+      const unsyncedItems = state.items.filter(i => i.synced === false);
+      if (unsyncedItems.length > 0) {
+        updateSyncBadge('syncing', `กำลังซิงค์ ${unsyncedItems.length} รายการจากเครื่อง...`);
+        for (const item of unsyncedItems) {
+          try {
+            item.synced = true;
+            const itemRef = doc(db, 'artifacts', appId, 'public', 'data', ITEMS_COLLECTION, item.id);
+            await setDoc(itemRef, item, { merge: true });
+          } catch (e) {
+            console.error("Error pushing item to cloud:", e);
+            item.synced = false;
+          }
+        }
+        saveLocalData(false);
+      }
+    }
+
+    function setupSnapshotListeners() {
+      if (!db) return;
+
+      // 1. Meta listener
       const metaRef = doc(db, 'artifacts', appId, 'public', 'data', META_COLLECTION, META_DOC_ID);
       onSnapshot(metaRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           state.meta = { ...state.meta, ...data };
-          const dateInput = document.getElementById('meta-date');
-          const projInput = document.getElementById('meta-project');
-          if (dateInput && data.date && document.activeElement !== dateInput) dateInput.value = data.date;
-          if (projInput && data.project && document.activeElement !== projInput) projInput.value = data.project;
+          renderReport();
         }
-      }, (error) => {
-        console.error("Meta Snapshot Error:", error);
-      });
+      }, (err) => console.error("Meta Snapshot Error:", err));
 
-      // 2. Listen for Realtime Items Collection Changes (RULE 2: No orderBy in query, sort in JS)
+      // 2. Items collection listener (Rule 2: No orderBy in query, sort in JS)
       const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', ITEMS_COLLECTION);
       onSnapshot(itemsColRef, (snapshot) => {
         const fetchedItems = [];
@@ -652,45 +802,85 @@
           fetchedItems.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        // Sort items by createdAt timestamp in JS memory
+        // Merge with any local unsynced items
+        const unsyncedLocals = state.items.filter(i => i.synced === false);
+        unsyncedLocals.forEach(localItem => {
+          if (!fetchedItems.some(remote => remote.id === localItem.id)) {
+            fetchedItems.push(localItem);
+          }
+        });
+
+        // Sort by timestamp
         fetchedItems.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-        
+
         state.items = fetchedItems;
-        saveLocalData(false); // Update local cache
+        saveLocalData(false);
         renderReport();
-        updateSyncBadge('synced', 'ซิงค์เรียบร้อยแล้ว');
-      }, (error) => {
-        console.error("Items Snapshot Error:", error);
+        updateSyncBadge('synced', '🟢 ออนไลน์ (ซิงค์เรียบร้อย)');
+      }, (err) => {
+        console.error("Items Snapshot Error:", err);
         updateSyncBadge('local', 'โหมดออฟไลน์');
       });
     }
 
-    // Push item change to Firestore
-    async function syncItemToCloud(item) {
-      if (!isCloudActive || !db || !currentUser) return;
+    // Force Explicit Sync Refresh
+    async function forceFetchCloudData() {
+      if (!db) {
+        showToast("ทำงานในโหมดออฟไลน์", "info");
+        return;
+      }
       try {
-        updateSyncBadge('saving', 'กำลังซิงค์ขึ้น Cloud...');
+        updateSyncBadge('syncing', 'กำลังดึงข้อมูลล่าสุด...');
+        await pushUnsyncedQueueToCloud();
+
+        const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', ITEMS_COLLECTION);
+        const snapshot = await getDocs(itemsColRef);
+        const fetchedItems = [];
+        snapshot.forEach((docSnap) => {
+          fetchedItems.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        fetchedItems.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+        state.items = fetchedItems;
+        saveLocalData(false);
+        renderReport();
+        showToast("ดึงข้อมูลล่าสุดเรียบร้อยแล้ว", "success");
+        updateSyncBadge('synced', '🟢 ออนไลน์ (ซิงค์เรียบร้อย)');
+      } catch (err) {
+        console.error("Force fetch error:", err);
+        showToast("เกิดข้อผิดพลาดในการดึงข้อมูล", "error");
+      }
+    }
+
+    async function syncItemToCloud(item) {
+      saveLocalData(false);
+      if (!isCloudOnline || !db) return;
+      try {
+        updateSyncBadge('syncing', 'กำลังบันทึก...');
+        item.synced = true;
         const itemRef = doc(db, 'artifacts', appId, 'public', 'data', ITEMS_COLLECTION, item.id);
         await setDoc(itemRef, item, { merge: true });
-        updateSyncBadge('synced', 'ซิงค์เรียบร้อยแล้ว');
+        updateSyncBadge('synced', '🟢 ออนไลน์ (ซิงค์เรียบร้อย)');
       } catch (err) {
-        console.error("Error writing item to Cloud:", err);
-        showToast("ไม่สามารถซิงค์ขึ้น Cloud ได้ บันทึกลงในเครื่องแทน", "info");
+        console.error("Error syncing item:", err);
+        item.synced = false;
+        saveLocalData(false);
       }
     }
 
     async function deleteItemFromCloud(itemId) {
-      if (!isCloudActive || !db || !currentUser) return;
+      if (!isCloudOnline || !db) return;
       try {
         const itemRef = doc(db, 'artifacts', appId, 'public', 'data', ITEMS_COLLECTION, itemId);
         await deleteDoc(itemRef);
       } catch (err) {
-        console.error("Error deleting item from Cloud:", err);
+        console.error("Error deleting item:", err);
       }
     }
 
     async function syncMetaToCloud() {
-      if (!isCloudActive || !db || !currentUser) return;
+      saveLocalData(false);
+      if (!isCloudOnline || !db) return;
       try {
         const metaRef = doc(db, 'artifacts', appId, 'public', 'data', META_COLLECTION, META_DOC_ID);
         await setDoc(metaRef, {
@@ -705,19 +895,16 @@
       }
     }
 
-    // Local Storage Backup
     function loadLocalData() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.items)) {
-            state.items = parsed.items;
-            if (parsed.meta) state.meta = { ...state.meta, ...parsed.meta };
-          }
+          if (parsed && Array.isArray(parsed.items)) state.items = parsed.items;
+          if (parsed.meta) state.meta = { ...state.meta, ...parsed.meta };
         }
-      } catch (err) {
-        console.error("Local load error:", err);
+      } catch (e) {
+        console.error("Local storage read error:", e);
       }
     }
 
@@ -725,26 +912,23 @@
       try {
         state.meta.project = document.getElementById('meta-project')?.value || state.meta.project;
         state.meta.date = document.getElementById('meta-date')?.value || state.meta.date;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        if (triggerToast) showToast("บันทึกข้อมูลเรียบร้อยแล้ว", "success");
-      } catch (err) {
-        console.warn("LocalStorage full:", err);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+        if (triggerToast) showToast("บันทึกข้อมูลสำเร็จ", "success");
+      } catch (e) {
+        console.warn("Local storage full:", e);
       }
     }
 
     // ==================== ACTIONS & EVENT HANDLERS ====================
-
-    // Add Item Handler with Mobile Form Auto-Commit
     async function addItem() {
       const areaSelect = document.getElementById('input-area');
       const commentTextarea = document.getElementById('input-comment');
       const closingTextCheckbox = document.getElementById('input-closing-text');
 
-      const area = areaSelect ? areaSelect.value : 'งานทั่วไป';
+      const area = areaSelect ? areaSelect.value : 'งานหลังคา';
       let description = commentTextarea ? commentTextarea.value.trim() : '';
       const showClosingText = closingTextCheckbox ? closingTextCheckbox.checked : true;
 
-      // If user provided neither photo nor comment text
       if (!description && !selectedImageDataUrl) {
         description = `ตรวจเช็คแก้ไขจุด defect ${area}`;
       }
@@ -756,15 +940,22 @@
         area: area,
         status: 'NONE',
         showClosingText: showClosingText,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        synced: false
       };
 
-      // 1. Update State Locally
+      // Optional Google Drive Backup
+      if (selectedImageDataUrl && appSettings.driveScriptUrl) {
+        uploadToGoogleDrive(selectedImageDataUrl, `${newItem.id}.jpg`).then(driveUrl => {
+          if (driveUrl) newItem.driveUrl = driveUrl;
+        });
+      }
+
       state.items.push(newItem);
       renderReport();
       saveLocalData(false);
 
-      // 2. Clear Form UI
+      // Reset form fields
       if (commentTextarea) commentTextarea.value = '';
       selectedImageDataUrl = null;
       const uploadPreviewContainer = document.getElementById('upload-preview-container');
@@ -775,28 +966,22 @@
       if (uploadPlaceholder) uploadPlaceholder.classList.remove('hidden');
       if (imageInput) imageInput.value = '';
 
-      showToast(`เพิ่มรายการใหม่เรียบร้อยแล้ว`, 'success');
-
-      // 3. Push to Cloud
+      showToast("เพิ่มรายการใหม่เรียบร้อยแล้ว", "success");
       await syncItemToCloud(newItem);
     }
 
-    // Mobile UX Fix: Save Button Handler (Auto-commits un-submitted form inputs)
     async function handleSaveData() {
       const commentTextarea = document.getElementById('input-comment');
       const commentText = commentTextarea ? commentTextarea.value.trim() : '';
 
-      // If user typed comment or attached photo but didn't press "+ เพิ่มรายการ", auto-add it now!
+      // Auto-commit form if text/image exists without clicking +เพิ่มรายการ first
       if (commentText || selectedImageDataUrl) {
         await addItem();
       }
 
-      // Update meta information
-      state.meta.project = document.getElementById('meta-project')?.value || state.meta.project;
-      state.meta.date = document.getElementById('meta-date')?.value || state.meta.date;
-
       saveLocalData(true);
       await syncMetaToCloud();
+      await pushUnsyncedQueueToCloud();
     }
 
     function toggleDefectStatus(itemId, targetStatus) {
@@ -805,7 +990,6 @@
 
       item.status = (item.status === targetStatus) ? 'NONE' : targetStatus;
       renderReport();
-      saveLocalData(false);
       syncItemToCloud(item);
     }
 
@@ -816,16 +1000,20 @@
         renderReport();
         saveLocalData(false);
         deleteItemFromCloud(itemId);
-        showToast('ลบรายการเรียบร้อยแล้ว', 'info');
+        showToast("ลบรายการเรียบร้อยแล้ว", "info");
       }
     }
 
-    function updateItemDescription(itemId, newText) {
+    function updateItemDescription(itemId, newHtml) {
       const item = state.items.find(i => i.id === itemId);
-      if (item && item.description !== newText.trim()) {
-        item.description = newText.trim();
-        saveLocalData(false);
-        syncItemToCloud(item);
+      if (item) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newHtml;
+        const cleanText = tempDiv.innerText.trim();
+        if (item.description !== cleanText) {
+          item.description = cleanText;
+          syncItemToCloud(item);
+        }
       }
     }
 
@@ -833,7 +1021,6 @@
       const item = state.items.find(i => i.id === itemId);
       if (item && item.area !== newArea.trim()) {
         item.area = newArea.trim();
-        saveLocalData(false);
         syncItemToCloud(item);
       }
     }
@@ -844,7 +1031,7 @@
       if (fileInput) fileInput.click();
     }
 
-    // ==================== RED ANNOTATION MARKUP MODAL ====================
+    // ==================== RED MARKUP CANVAS MODAL ====================
     function openMarkupModal(itemId) {
       const item = state.items.find(i => i.id === itemId);
       if (!item || !item.image) return;
@@ -901,7 +1088,7 @@
 
         if (currentTool === 'freehand') {
           ctx.strokeStyle = '#e11d48';
-          ctx.lineWidth = Math.max(4, canvas.width / 150);
+          ctx.lineWidth = Math.max(5, canvas.width / 130);
           ctx.lineCap = 'round';
           ctx.lineTo(pos.x, pos.y);
           ctx.stroke();
@@ -910,7 +1097,7 @@
             ctx.putImageData(drawHistory[drawHistory.length - 1], 0, 0);
           }
           ctx.strokeStyle = '#e11d48';
-          ctx.lineWidth = Math.max(4, canvas.width / 120);
+          ctx.lineWidth = Math.max(5, canvas.width / 110);
 
           if (currentTool === 'circle') {
             const rx = Math.abs(pos.x - startX) / 2;
@@ -926,7 +1113,7 @@
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
             const angle = Math.atan2(pos.y - startY, pos.x - startX);
-            const headLen = Math.max(12, canvas.width / 40);
+            const headLen = Math.max(14, canvas.width / 35);
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
             ctx.lineTo(pos.x - headLen * Math.cos(angle - Math.PI / 6), pos.y - headLen * Math.sin(angle - Math.PI / 6));
@@ -952,30 +1139,30 @@
       canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDraw(e); });
     }
 
-    // Export PDF
+    // Export to PDF
     function exportToPDF() {
       const element = document.getElementById('report-paper');
       if (!element) return;
 
-      showToast("กำลังเตรียมสร้างไฟล์ PDF...", "info");
+      showToast("กำลังสร้างไฟล์ PDF...", "info");
 
       const opt = {
         margin:       [4, 4, 4, 4],
-        filename:     `List_of_Defect_No3_162_307.pdf`,
+        filename:     `List_of_Defect_House_162_307_No3.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
       html2pdf().set(opt).from(element).save().then(() => {
-        showToast("สร้างไฟล์ PDF เรียบร้อยแล้ว", "success");
+        showToast("ส่งออกไฟล์ PDF เรียบร้อยแล้ว", "success");
       }).catch(err => {
-        console.error("PDF Export error:", err);
-        showToast("เปิดพิมพ์ (Print) เพื่อบันทึกเป็น PDF แทน", "error");
+        console.error("PDF Export Error:", err);
+        showToast("เปิดโหมดพิมพ์ (Print) เพื่อบันทึก PDF แทน", "error");
       });
     }
 
-    // Window Global Exports
+    // Window Exports
     window.addItem = addItem;
     window.toggleDefectStatus = toggleDefectStatus;
     window.deleteDefectItem = deleteDefectItem;
@@ -985,51 +1172,31 @@
     window.openMarkupModal = openMarkupModal;
     window.exportToPDF = exportToPDF;
 
-    // Initialization
+    // DOM Ready Setup
     document.addEventListener('DOMContentLoaded', async () => {
       
-      // Initialize Firebase Cloud Realtime Sync Engine
+      // Init Firebase Engine
       await initFirebaseSync();
 
-      // Set default Date if empty
-      const dateInput = document.getElementById('meta-date');
-      if (dateInput && !dateInput.value) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        state.meta.date = today;
-      }
-
-      // Metadata change listener
-      dateInput?.addEventListener('change', (e) => {
-        state.meta.date = e.target.value;
-        saveLocalData(false);
-        syncMetaToCloud();
-      });
-
-      document.getElementById('meta-project')?.addEventListener('change', (e) => {
-        state.meta.project = e.target.value;
-        saveLocalData(false);
-        syncMetaToCloud();
-      });
-
-      // Buttons
+      // Form event bindings
       document.getElementById('add-item-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         addItem();
       });
 
       document.getElementById('btn-save')?.addEventListener('click', handleSaveData);
+      document.getElementById('btn-sync-now')?.addEventListener('click', forceFetchCloudData);
       document.getElementById('btn-export-pdf')?.addEventListener('click', exportToPDF);
       document.getElementById('btn-print')?.addEventListener('click', () => window.print());
 
-      // Quick preset selector
+      // Preset selector
       document.getElementById('quick-preset')?.addEventListener('change', (e) => {
         const val = e.target.value;
         const textarea = document.getElementById('input-comment');
         if (val && textarea) textarea.value = val;
       });
 
-      // Image Upload
+      // Photo upload change
       const imageInput = document.getElementById('image-input');
       const uploadPreviewImg = document.getElementById('upload-preview-img');
       const uploadPreviewContainer = document.getElementById('upload-preview-container');
@@ -1041,15 +1208,15 @@
           if (!file) return;
 
           try {
-            showToast("กำลังบีบอัดรูปภาพ...", "info");
-            selectedImageDataUrl = await compressImageFile(file, 550, 0.60);
+            showToast("กำลังประมวลผลรูปถ่าย...", "info");
+            selectedImageDataUrl = await compressImageFile(file, appSettings.qualityMaxWidth, 0.70);
             
             if (uploadPreviewImg) uploadPreviewImg.src = selectedImageDataUrl;
             if (uploadPreviewContainer) uploadPreviewContainer.classList.remove('hidden');
             if (uploadPlaceholder) uploadPlaceholder.classList.add('hidden');
-            showToast("พร้อมแนบรูปถ่ายแล้ว", "success");
+            showToast("แนบรูปถ่ายเรียบร้อยแล้ว", "success");
           } catch (err) {
-            console.error("Error processing image:", err);
+            console.error("Image read error:", err);
             showToast("ไม่สามารถประมวลผลรูปภาพได้", "error");
           }
         });
@@ -1063,7 +1230,7 @@
         if (imageInput) imageInput.value = '';
       });
 
-      // Row inline photo replace
+      // Inline row replacer
       const rowFileReplacer = document.getElementById('row-file-replacer');
       if (rowFileReplacer) {
         rowFileReplacer.addEventListener('change', async (e) => {
@@ -1072,24 +1239,58 @@
 
           try {
             showToast("กำลังประมวลผลรูปถ่ายใหม่...", "info");
-            const compressedUrl = await compressImageFile(file, 550, 0.60);
+            const compressedUrl = await compressImageFile(file, appSettings.qualityMaxWidth, 0.70);
             const item = state.items.find(i => i.id === activeAnnotateItemId);
             if (item) {
               item.image = compressedUrl;
               renderReport();
-              saveLocalData(false);
               await syncItemToCloud(item);
-              showToast("อัปเดตรูปถ่ายเรียบร้อยแล้ว", "success");
+              showToast("เปลี่ยนรูปถ่ายเรียบร้อยแล้ว", "success");
             }
           } catch (err) {
-            console.error("Error replacing row photo:", err);
+            console.error("Photo replace error:", err);
           } finally {
             rowFileReplacer.value = '';
           }
         });
       }
 
-      // Annotation Modal Listeners
+      // Settings Modal Listeners
+      const driveModal = document.getElementById('drive-modal');
+      const driveScriptInput = document.getElementById('drive-script-url');
+      if (driveScriptInput && appSettings.driveScriptUrl) {
+        driveScriptInput.value = appSettings.driveScriptUrl;
+      }
+
+      document.getElementById('btn-drive-settings')?.addEventListener('click', () => {
+        driveModal?.classList.remove('hidden');
+      });
+
+      document.getElementById('btn-close-drive-modal')?.addEventListener('click', () => {
+        driveModal?.classList.add('hidden');
+      });
+
+      document.getElementById('btn-save-drive-settings')?.addEventListener('click', () => {
+        const qualityRadios = document.getElementsByName('quality-mode');
+        for (const radio of qualityRadios) {
+          if (radio.checked) {
+            appSettings.qualityMaxWidth = parseInt(radio.value, 10);
+            break;
+          }
+        }
+        if (driveScriptInput) {
+          appSettings.driveScriptUrl = driveScriptInput.value.trim();
+          localStorage.setItem('drive_script_url', appSettings.driveScriptUrl);
+        }
+        const qualityLabel = document.getElementById('current-quality-label');
+        if (qualityLabel) {
+          qualityLabel.textContent = `โหมดภาพ: ${appSettings.qualityMaxWidth === 1200 ? 'HD (1200px)' : 'มาตรฐาน (800px)'}`;
+        }
+        driveModal?.classList.add('hidden');
+        showToast("บันทึกการตั้งค่าเรียบร้อยแล้ว", "success");
+      });
+
+      // Canvas markup listeners
       setupCanvasListeners();
 
       document.getElementById('btn-close-annotation')?.addEventListener('click', () => {
@@ -1126,12 +1327,11 @@
 
       document.getElementById('btn-save-annotation')?.addEventListener('click', async () => {
         if (!canvas || !activeAnnotateItemId) return;
-        const editedUrl = canvas.toDataURL('image/jpeg', 0.65);
+        const editedUrl = canvas.toDataURL('image/jpeg', 0.75);
         const item = state.items.find(i => i.id === activeAnnotateItemId);
         if (item) {
           item.image = editedUrl;
           renderReport();
-          saveLocalData(false);
           await syncItemToCloud(item);
           showToast("บันทึกภาพจุดชำรุดเรียบร้อยแล้ว", "success");
         }
