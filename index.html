@@ -147,8 +147,18 @@
                 <span class="text-amber-400"><i class="fa-regular fa-clock"></i> รอตรวจ <strong id="stat-pending" class="text-white text-sm">0</strong></span>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action Buttons with Prominent Cloud Save -->
             <div class="flex items-center flex-wrap gap-2">
+                <!-- Save to Cloud Button -->
+                <button id="btn-cloud-save" onclick="saveToCloud()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg animate-pulse">
+                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> บันทึกข้อมูล (Save)
+                </button>
+
+                <!-- Sync/Refresh Button -->
+                <button onclick="loadFromCloud(true)" title="ดึงข้อมูลล่าสุดจาก Cloud" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate"></i> Sync
+                </button>
+
                 <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
                     <i class="fa-solid fa-plus"></i> เพิ่มรายการ
                 </button>
@@ -181,6 +191,10 @@
                 </div>
             </div>
         </div>
+        <!-- Status Notification Bar -->
+        <div id="save-status-bar" class="bg-slate-800 text-slate-300 text-xs px-4 py-1 text-right border-t border-slate-800">
+            <span id="save-status-text"><i class="fa-solid fa-cloud"></i> พร้อมบันทึกข้อมูล</span>
+        </div>
     </header>
 
     <!-- Main Container -->
@@ -192,7 +206,7 @@
                 <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
                     <i class="fa-solid fa-sliders text-blue-600"></i> ข้อมูลโครงการและหัวข้อรายงาน
                 </h3>
-                <span class="text-xs text-slate-500">แก้ไขข้อมูลด้านล่างจะอัพเดทตารางรายงานทันที</span>
+                <span class="text-xs text-slate-500">ข้อมูล Customer Name และบ้านเลขที่ถูกล็อคตามสัญญา</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                 <div>
@@ -200,20 +214,20 @@
                     <input type="text" id="meta-project-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">No (การตรวจครั้งที่)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">No (ครั้งที่)</label>
                     <input type="text" id="meta-no-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">บ้านเลขที่</label>
-                    <input type="text" id="meta-house-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น 99/123">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1 text-slate-400">บ้านเลขที่ <i class="fa-solid fa-lock text-amber-500"></i></label>
+                    <input type="text" id="meta-house-input" value="162/307" disabled readonly class="w-full border border-slate-200 bg-slate-100 text-slate-500 rounded px-2.5 py-1.5 font-semibold cursor-not-allowed">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Date (วันที่)</label>
-                    <input type="text" id="meta-date-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-xs font-semibold text-blue-600 mb-1">Date (เลือก/กรอกทีหลังได้)</label>
+                    <input type="date" id="meta-date-input" onchange="updateMetadata()" class="w-full border border-blue-400 bg-blue-50/50 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Customer Name</label>
-                    <input type="text" id="meta-customer-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1 text-slate-400">Customer Name <i class="fa-solid fa-lock text-amber-500"></i></label>
+                    <input type="text" id="meta-customer-input" value="k. วรวิช ,ปิยวรรณ" disabled readonly class="w-full border border-slate-200 bg-slate-100 text-slate-500 rounded px-2.5 py-1.5 font-semibold cursor-not-allowed">
                 </div>
             </div>
         </div>
@@ -239,221 +253,191 @@
                             </div>
                             <div class="flex items-center gap-1 mt-1">
                                 <span class="font-bold whitespace-nowrap">Date :</span>
-                                <span id="disp-date" class="font-medium">18-10-2569</span>
+                                <span id="disp-date" class="font-medium"></span>
                             </div>
                         </td>
                         <td class="p-2 w-1/2 align-top leading-relaxed">
                             <div class="flex justify-between items-center">
                                 <div>
                                     <span class="font-bold">No :</span>
-                                    <span id="disp-no" class="font-medium ml-1">ครั้งที่ 3</span>
+                                    <span id="disp-no" class="font-medium ml-1">3</span>
                                 </div>
                                 <div>
                                     <span class="font-bold">บ้านเลขที่ :</span>
-                                    <span id="disp-house" class="font-medium ml-1">-</span>
+                                    <span id="disp-house" class="font-semibold ml-1">162/307</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-1 mt-1">
                                 <span class="font-bold whitespace-nowrap">Customer Name :</span>
-                                <span id="disp-customer" class="font-medium">k.</span>
+                                <span id="disp-customer" class="font-semibold">k. วรวิช ,ปิยวรรณ</span>
                             </div>
                         </td>
                     </tr>
                     <!-- Column Headers -->
-                    <tr class="bg-reportHeader text-white text-center text-sm sm:text-base font-bold" style="background-color: #365f91; color: white;">
-                        <td class="py-2 px-2 w-[40%] border-r border-black underline">
-                            ITEM
-                        </td>
-                        <td class="py-2 px-2 w-[60%] underline">
-                            DESCRIPTION OF DEFECT AND COMMENT
-                        </td>
-                    </tr>
-                </thead>
-            </table>
+    <!-- Firebase SDK Imports & Real-time Cloud Storage Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            <!-- Defect List Items Container -->
-            <div id="defect-items-list" class="flex flex-col border-b-2 border-l-2 border-r-2 border-black">
-                <!-- Dynamic Items Inserted Here -->
-            </div>
+        // Environment Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'defect-report-house-162-307';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDemoKeyOnlyForFallback12345",
+            authDomain: "defect-report-app.firebaseapp.com",
+            projectId: "defect-report-app",
+            storageBucket: "defect-report-app.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:demo"
+        };
 
-        </div>
-        <!-- End Report Container -->
+        let app, db, auth;
+        let currentUser = null;
+        let isCloudAvailable = false;
 
-    </main>
+        // Document reference for this specific house inspection report
+        function getDocRef() {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'reports', 'house_162_307');
+        }
 
-    <!-- Modal 1: Add / Edit Item Modal -->
-    <div id="item-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-8 border border-slate-200 overflow-hidden">
-            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-                <h3 id="modal-title" class="font-bold text-lg flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-blue-400"></i> เพิ่มรายการตรวจ Defect
-                </h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-            </div>
+        // Initialize Firebase Authentication & Firestore
+        async function initFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-            <form id="defect-form" onsubmit="saveDefectItem(event)" class="p-6 space-y-4">
-                <input type="hidden" id="edit-item-id" value="">
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
-                <!-- Image Upload & Preview -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">
-                        รูปภาพจุดบกพร่อง (Defect Photo) <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <div id="modal-photo-preview-box" class="w-full sm:w-48 h-36 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden group">
-                            <img id="modal-photo-img" src="" class="hidden w-full h-full object-cover">
-                            <div id="modal-photo-placeholder" class="text-center p-2 text-slate-400">
-                                <i class="fa-solid fa-cloud-arrow-up text-3xl mb-1 text-slate-300"></i>
-                                <p class="text-xs">เลือกหรือแนบรูปภาพ</p>
-                            </div>
-                        </div>
+                currentUser = auth.currentUser;
+                isCloudAvailable = true;
+                updateStatusText('<i class="fa-solid fa-cloud-check text-emerald-400"></i> เชื่อมต่อ Cloud เรียบร้อยแล้ว');
 
-                        <div class="flex-1 space-y-2 w-full">
-                            <input type="file" id="photo-file-input" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" onclick="document.getElementById('photo-file-input').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition border border-slate-300 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-image text-blue-600"></i> เลือกรูปจากเครื่อง
-                                </button>
-                                <button type="button" id="btn-open-draw" onclick="openDrawModal()" class="hidden bg-red-50 hover:bg-red-100 text-red-600 text-xs px-3 py-2 rounded-lg font-medium transition border border-red-200 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-dot"></i> วาดวงกลมสีแดงชี้จุด
-                                </button>
-                            </div>
-                            <p class="text-xs text-slate-500 leading-tight">
-                                ข้อแนะนำ: เมื่อเลือกรูปแล้ว สามารถกดปุ่ม <span class="font-semibold text-red-600">"วาดวงกลมสีแดงชี้จุด"</span> เพื่อทำเครื่องหมายเน้นจุดชำรุดได้
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                // Real-time synchronization listener
+                onSnapshot(getDocRef(), (snapshot) => {
+                    if (snapshot.exists()) {
+                        const cloudData = snapshot.data();
+                        if (cloudData && cloudData.items) {
+                            window.appState = {
+                                ...cloudData,
+                                // Enforce fixed locked fields
+                                houseNo: "162/307",
+                                customerName: "k. วรวิช ,ปิยวรรณ"
+                            };
+                            localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
+                            window.renderApp();
+                            const nowStr = new Date().toLocaleTimeString('th-TH');
+                            updateStatusText(`<i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุดเมื่อ ${nowStr}`);
+                        }
+                    }
+                }, (error) => {
+                    console.warn("Firestore snapshot listener error:", error);
+                    updateStatusText('<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> ใช้งานแบบออฟไลน์ (บันทึกในเครื่อง)');
+                });
 
-                <!-- Location / Zone Selection -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">
-                        บริเวณ (Zone / Area)
-                    </label>
-                    <input type="text" id="item-location-input" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น งานหลังคา, ห้องนอนใหญ่, งานสี">
-                    <!-- Preset Location Quick Buttons -->
-                    <div class="flex flex-wrap gap-1.5 mt-2">
-                        <span class="text-xs text-slate-400 self-center">ปุ่มลัด:</span>
-                        <button type="button" onclick="setLocationPreset('งานหลังคา')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานหลังคา</button>
-                        <button type="button" onclick="setLocationPreset('งานสี')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานสี</button>
-                        <button type="button" onclick="setLocationPreset('งานพื้น')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานพื้น</button>
-                        <button type="button" onclick="setLocationPreset('งานระบบไฟ')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานระบบไฟ</button>
-                        <button type="button" onclick="setLocationPreset('งานสุขาภิบาล')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานสุขาภิบาล</button>
-                        <button type="button" onclick="setLocationPreset('งานประตู-หน้าต่าง')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานประตู-หน้าต่าง</button>
-                    </div>
-                </div>
+            } catch (err) {
+                console.warn("Firebase initialization failed, falling back to local storage:", err);
+                isCloudAvailable = false;
+                updateStatusText('<i class="fa-solid fa-hard-drive"></i> บันทึกข้อมูลในเครื่อง (Offline Mode)');
+            }
+        }
 
-                <!-- Description & Comments -->
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-sm font-bold text-slate-700">
-                            ข้อความอธิบายความบกพร่อง (Comment) <span class="text-red-500">*</span>
-                        </label>
-                        <button type="button" onclick="appendStandardPhrase()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded font-medium border border-blue-200 transition">
-                            <i class="fa-solid fa-plus-circle"></i> + ข้อความติดตามมาตรฐาน
-                        </button>
-                    </div>
-                    <textarea id="item-comment-input" rows="3" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed" placeholder="ระบุรายละเอียด defect..." required></textarea>
-                </div>
+        // Save data to Firestore Cloud
+        window.saveToCloud = async function() {
+            const btn = document.getElementById('btn-cloud-save');
+            const oldText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+            updateStatusText('<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> กำลังอัปโหลดข้อมูลลง Cloud...');
 
-                <!-- Underline standard note checkbox toggle -->
-                <div class="flex items-center gap-2 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                    <input type="checkbox" id="item-append-note-checkbox" checked class="w-4 h-4 text-blue-600 rounded">
-                    <label for="item-append-note-checkbox" class="text-xs text-amber-900 font-medium">
-                        ต่อด้วยประโยคเน้นย้ำ: <span class="underline font-bold">"พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง"</span>
-                    </label>
-                </div>
+            // Always update local storage first
+            localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
 
-                <!-- Inspection Status (Re-inspection status) -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">
-                        ผลการตรวจซ้ำ (Status)
-                    </label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
-                            <input type="radio" name="item-status" value="pending" checked class="text-amber-500 focus:ring-amber-400">
-                            <span class="text-amber-600"><i class="fa-regular fa-clock"></i> รอตรวจ</span>
-                        </label>
-                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
-                            <input type="radio" name="item-status" value="pass" class="text-blue-600 focus:ring-blue-500">
-                            <span class="text-blue-700"><i class="fa-solid fa-check-double"></i> PASS (ผ่าน)</span>
-                        </label>
-                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
-                            <input type="radio" name="item-status" value="fail" class="text-red-600 focus:ring-red-500">
-                            <span class="text-red-600"><i class="fa-solid fa-xmark"></i> NOT PASS</span>
-                        </label>
-                    </div>
-                </div>
+            if (!isCloudAvailable || !auth.currentUser) {
+                btn.disabled = false;
+                btn.innerHTML = oldText;
+                alert("บันทึกข้อมูลในเครื่องเรียบร้อยแล้ว (โหมดออฟไลน์)");
+                updateStatusText('<i class="fa-solid fa-check text-emerald-400"></i> บันทึกในเครื่องแล้ว');
+                return;
+            }
 
-                <!-- Modal Actions -->
-                <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-100">
-                        ยกเลิก
-                    </button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกรายการ
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+            try {
+                // Ensure photos are compressed before pushing to Firestore
+                const payload = {
+                    ...window.appState,
+                    project: window.appState.project || "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
+                    no: window.appState.no || "3",
+                    houseNo: "162/307", // Locked
+                    customerName: "k. วรวิช ,ปิยวรรณ", // Locked
+                    date: window.appState.date || "",
+                    lastSavedAt: new Date().toISOString(),
+                    savedBy: auth.currentUser.uid
+                };
 
-    <!-- Modal 2: Photo Markup / Red Circle Drawing Canvas -->
-    <div id="draw-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-slate-900 text-white px-5 py-3 flex items-center justify-between">
-                <h3 class="font-bold text-base flex items-center gap-2">
-                    <i class="fa-solid fa-circle-notch text-red-500"></i> วาดวงกลมสีแดงชี้จุด defect
-                </h3>
-                <button onclick="closeDrawModal()" class="text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+                await setDoc(getDocRef(), payload);
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                updateStatusText(`<i class="fa-solid fa-cloud-check text-emerald-400"></i> บันทึกลง Cloud สำเร็จเมื่อ ${timeStr}`);
+                
+                // Temporary feedback on button
+                btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg";
+                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> บันทึกเรียบร้อย!';
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.className = "bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg";
+                    btn.innerHTML = oldText;
+                }, 2000);
 
-            <!-- Canvas Workspace -->
-            <div class="p-4 bg-slate-800 flex-1 flex items-center justify-center overflow-auto min-h-[300px]">
-                <canvas id="markup-canvas" class="border-2 border-slate-600 rounded bg-black cursor-crosshair max-w-full max-h-[60vh] object-contain shadow-lg"></canvas>
-            </div>
+            } catch (err) {
+                console.error("Save to Firestore failed:", err);
+                btn.disabled = false;
+                btn.innerHTML = oldText;
+                alert("เกิดข้อผิดพลาดในการบันทึกลง Cloud: " + err.message);
+                updateStatusText('<i class="fa-solid fa-xmark text-red-400"></i> บันทึกลง Cloud ไม่สำเร็จ');
+            }
+        };
 
-            <!-- Drawing Controls -->
-            <div class="p-4 bg-slate-100 border-t flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
-                <div class="flex items-center gap-2">
-                    <span class="font-semibold text-slate-700">โหมด:</span>
-                    <button type="button" id="tool-circle" onclick="setDrawTool('circle')" class="px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm">
-                        <i class="fa-regular fa-circle"></i> วาดวงกลม
-                    </button>
-                    <button type="button" id="tool-pen" onclick="setDrawTool('pen')" class="px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium">
-                        <i class="fa-solid fa-pen"></i> ปากกาวาดอิสระ
-                    </button>
-                    <button type="button" onclick="resetCanvasImage()" class="px-3 py-1.5 rounded bg-amber-100 text-amber-800 font-medium hover:bg-amber-200">
-                        <i class="fa-solid fa-rotate-left"></i> ล้างรอยวาด
-                    </button>
-                </div>
+        window.loadFromCloud = async function(manualAlert = false) {
+            if (!isCloudAvailable) return;
+            try {
+                const snap = await getDoc(getDocRef());
+                if (snap.exists()) {
+                    window.appState = snap.data();
+                    window.appState.houseNo = "162/307";
+                    window.appState.customerName = "k. วรวิช ,ปิยวรรณ";
+                    localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
+                    window.renderApp();
+                    if (manualAlert) alert("ดึงข้อมูลล่าสุดจาก Cloud เรียบร้อยแล้ว");
+                }
+            } catch (e) {
+                console.error("Error manual load:", e);
+            }
+        };
 
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="closeDrawModal()" class="px-4 py-1.5 border border-slate-300 rounded bg-white text-slate-700">
-                        ยกเลิก
-                    </button>
-                    <button type="button" onclick="saveCanvasMarkup()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium shadow">
-                        <i class="fa-solid fa-check"></i> นำรูปนี้ไปใช้งาน
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+        function updateStatusText(htmlStr) {
+            const el = document.getElementById('save-status-text');
+            if (el) el.innerHTML = htmlStr;
+        }
 
+        // Start Firebase on DOM load
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+        });
+    </script>
 
-    <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+    <!-- App State & DOM Logic -->
     <script>
-        // Data Structure & State Management
-        let appState = {
+        // Data Structure with locked fields pre-set
+        window.appState = {
             project: "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
-            no: "ครั้งที่ 3",
-            houseNo: "123/45",
-            date: "18-10-2569",
-            customerName: "k. สมชาย",
+            no: "3",
+            houseNo: "162/307", // LOCKED
+            date: "", // Default empty as requested
+            customerName: "k. วรวิช ,ปิยวรรณ", // LOCKED
             items: []
         };
 
@@ -468,7 +452,7 @@
                 comment: "พบแผ่นครอบหน้าหลังคา เสมือนยิงสกรูไม่ครบ ตรวจสอบการติดตั้ง แก้ไขยิงสกรูให้ครบ",
                 appendNote: true,
                 location: "งานหลังคา",
-                status: "pass" // 'pass', 'fail', 'pending'
+                status: "pass"
             },
             {
                 id: "def_2",
@@ -487,10 +471,272 @@
             setupCanvasEvents();
         });
 
-        // Save & Load LocalStorage
         function saveData() {
+            // Force strict values for locked fields
+            appState.houseNo = "162/307";
+            appState.customerName = "k. วรวิช ,ปิยวรรณ";
+
             localStorage.setItem('home_defect_report_v3', JSON.stringify(appState));
             updateCounters();
+        }
+
+        function loadSavedData() {
+            const saved = localStorage.getItem('home_defect_report_v3');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch (e) {
+                    appState.items = DEFAULT_ITEMS;
+                }
+            } else {
+                appState.items = DEFAULT_ITEMS;
+            }
+
+            // Always enforce locked values
+            appState.houseNo = "162/307";
+            appState.customerName = "k. วรวิช ,ปิยวรรณ";
+            if (!appState.no) appState.no = "3";
+            if (!appState.project) appState.project = "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์";
+
+            // Set Form metadata inputs
+            document.getElementById('meta-project-input').value = appState.project || "";
+            document.getElementById('meta-no-input').value = appState.no || "3";
+            document.getElementById('meta-house-input').value = "162/307";
+            document.getElementById('meta-date-input').value = appState.date || "";
+            document.getElementById('meta-customer-input').value = "k. วรวิช ,ปิยวรรณ";
+        }
+
+        // Render Report Document
+        window.renderApp = function() {
+            // Enforce locked metadata rendering
+            document.getElementById('disp-project').innerText = appState.project || "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์";
+            document.getElementById('disp-no').innerText = appState.no || "3";
+            document.getElementById('disp-house').innerText = "162/307";
+            document.getElementById('disp-date').innerText = appState.date ? formatDateThai(appState.date) : "";
+            document.getElementById('disp-customer').innerText = "k. วรวิช ,ปิยวรรณ";
+
+            // Render Items Table List
+            const listContainer = document.getElementById('defect-items-list');
+            listContainer.innerHTML = '';
+
+            if (!appState.items || appState.items.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-8 text-center text-slate-400 no-print">
+                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                        <p>ยังไม่มีรายการ defect - กดปุ่ม "+ เพิ่มรายการ" ด้านบนเพื่อเริ่มบันทึก</p>
+                    </div>
+                `;
+                updateCounters();
+                return;
+            }
+
+            appState.items.forEach((item, index) => {
+                const itemIndex = index + 1;
+                const isPass = item.status === 'pass';
+                const isFail = item.status === 'fail';
+
+                const rowEl = document.createElement('div');
+                rowEl.className = 'defect-item-row flex flex-col border-b border-black last:border-b-0 bg-white relative group';
+
+                rowEl.innerHTML = `
+                    <!-- Action Bar (Hidden in PDF/Print) -->
+                    <div class="no-print bg-slate-100 border-b border-slate-300 px-3 py-1 flex items-center justify-between text-xs text-slate-600">
+                        <div class="font-bold text-slate-800 flex items-center gap-2">
+                            <span>รายการที่ #${itemIndex}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded font-normal ${item.status==='pass'?'bg-emerald-100 text-emerald-800':item.status==='fail'?'bg-red-100 text-red-800':'bg-amber-100 text-amber-800'}">
+                                ${item.status==='pass'?'ผ่าน (PASS)':item.status==='fail'?'ไม่ผ่าน (NOT PASS)':'รอตรวจ'}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30"' : ''} title="ย้ายขึ้น" class="hover:text-blue-600 px-1">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <button onclick="moveItem(${index}, 1)" ${index === appState.items.length - 1 ? 'disabled class="opacity-30"' : ''} title="ย้ายลง" class="hover:text-blue-600 px-1">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </button>
+                            <button onclick="openEditModal('${item.id}')" class="hover:text-blue-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded shadow-sm">
+                                <i class="fa-solid fa-pen"></i> แก้ไข
+                            </button>
+                            <button onclick="deleteDefectItem('${item.id}')" class="hover:text-red-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded text-red-600 shadow-sm">
+                                <i class="fa-solid fa-trash-can"></i> ลบ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Defect Content Row matching uploaded template -->
+                    <div class="flex flex-col md:flex-row w-full min-h-[220px]">
+                        <!-- Left Column: ITEM Photo -->
+                        <div class="w-full md:w-[40%] p-2.5 border-b md:border-b-0 md:border-r border-black flex flex-col items-center justify-center bg-white relative">
+                            <img src="${item.photo}" class="max-w-full max-h-[240px] w-auto h-auto object-contain rounded border border-slate-200">
+                        </div>
+
+                        <!-- Right Column: DESCRIPTION OF DEFECT AND COMMENT -->
+                        <div class="w-full md:w-[60%] p-3.5 flex flex-col justify-between bg-white leading-relaxed text-sm sm:text-base text-black">
+                            <!-- Comment Text -->
+                            <div class="space-y-2">
+                                <p class="text-base sm:text-lg font-normal text-slate-900 leading-snug">
+                                    ${escapeHtml(item.comment)}
+                                    ${item.appendNote ? `<span class="underline font-semibold ml-1">${STANDARD_NOTE}</span>` : ''}
+                                </p>
+                            </div>
+
+                            <!-- Bottom Status and Location Row -->
+                            <div class="mt-4 pt-3 border-t border-slate-200 flex items-end justify-between text-sm sm:text-base">
+                                
+                                <!-- Interactive PASS / NOT PASS Click Boxes -->
+                                <div class="flex items-center gap-6 font-bold tracking-wide">
+                                    <div onclick="toggleStatus('${item.id}', 'pass')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ผ่าน">
+                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isPass ? 'active-pass' : ''} group-hover/btn:border-blue-600">
+                                        </div>
+                                        <span class="${isPass ? 'text-black font-extrabold' : 'text-slate-700'}">PASS</span>
+                                    </div>
+
+                                    <div onclick="toggleStatus('${item.id}', 'fail')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ไม่ผ่าน">
+                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isFail ? 'active-fail' : ''} group-hover/btn:border-red-600">
+                                        </div>
+                                        <span class="${isFail ? 'text-black font-extrabold' : 'text-slate-700'}">NOT PASS</span>
+                                    </div>
+                                </div>
+
+                                <!-- Location Zone Tag -->
+                                <div class="text-xs sm:text-sm font-semibold text-slate-800">
+                                    บริเวณ : <span class="font-normal underline">${item.location || 'งานทั่วไป'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grey Item Index Separator Bar -->
+                    <div class="bg-slate-200 border-t border-black px-2 py-0.5 text-xs font-bold text-black">
+                        ${itemIndex}
+                    </div>
+                `;
+
+                listContainer.appendChild(rowEl);
+            });
+
+            updateCounters();
+        };
+
+        // Live Metadata update
+        function updateMetadata() {
+            appState.project = document.getElementById('meta-project-input').value;
+            appState.no = document.getElementById('meta-no-input').value;
+            appState.date = document.getElementById('meta-date-input').value;
+
+            // Always enforce fixed values
+            appState.houseNo = "162/307";
+            appState.customerName = "k. วรวิช ,ปิยวรรณ";
+
+            document.getElementById('disp-project').innerText = appState.project || "-";
+            document.getElementById('disp-no').innerText = appState.no || "3";
+            document.getElementById('disp-date').innerText = appState.date ? formatDateThai(appState.date) : "";
+
+            saveData();
+        }
+
+        // Image Compression Helper before storing
+        function compressImage(base64Str, maxWidth = 800, quality = 0.75) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxWidth) {
+                        h = Math.round((h * maxWidth) / w);
+                        w = maxWidth;
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => resolve(base64Str);
+                img.src = base64Str;
+            });
+        }
+
+        // Format Date to Thai String
+        function formatDateThai(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const y = parseInt(parts[0]) + 543;
+                return `${parts[2]}-${parts[1]}-${y}`;
+            }
+            return dateStr;
+        }
+
+        // Handle Photo File Upload with Auto-compression
+        async function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                // Compress image
+                currentPhotoBase64 = await compressImage(e.target.result, 800, 0.75);
+                document.getElementById('modal-photo-img').src = currentPhotoBase64;
+                document.getElementById('modal-photo-img').classList.remove('hidden');
+                document.getElementById('modal-photo-placeholder').classList.add('hidden');
+                document.getElementById('btn-open-draw').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Save Form Item
+        async function saveDefectItem(event) {
+            event.preventDefault();
+
+            if (!currentPhotoBase64) {
+                alert("กรุณาแนบรูปภาพจุดบกพร่องก่อนบันทึกรายการ");
+                return;
+            }
+
+            const editId = document.getElementById('edit-item-id').value;
+            const comment = document.getElementById('item-comment-input').value.trim();
+            const location = document.getElementById('item-location-input').value.trim() || 'งานหลังคา';
+            const appendNote = document.getElementById('item-append-note-checkbox').checked;
+            
+            let status = 'pending';
+            const radios = document.getElementsByName('item-status');
+            radios.forEach(r => { if (r.checked) status = r.value; });
+
+            // Compress image before saving
+            const compressedPhoto = await compressImage(currentPhotoBase64, 800, 0.75);
+
+            if (editId) {
+                const index = appState.items.findIndex(i => i.id === editId);
+                if (index !== -1) {
+                    appState.items[index] = {
+                        ...appState.items[index],
+                        photo: compressedPhoto,
+                        comment,
+                        location,
+                        appendNote,
+                        status
+                    };
+                }
+            } else {
+                const newItem = {
+                    id: 'def_' + Date.now(),
+                    photo: compressedPhoto,
+                    comment,
+                    location,
+                    appendNote,
+                    status
+                };
+                appState.items.push(newItem);
+            }
+
+            saveData();
+            renderApp();
+            closeModal();
+
+            // Auto sync to cloud if available
+            if (window.saveToCloud) window.saveToCloud();
         }
 
         function loadSavedData() {
