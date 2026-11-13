@@ -1,1365 +1,1050 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แอพตรวจบ้าน ครั้งที่ 3 - List of Defect</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Font: Sarabun -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <!-- html2pdf.js for clean PDF export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List of Defect - รายงานตรวจบ้าน ครั้งที่ 3</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Sarabun & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2pdf.js for PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        reportHeader: '#365f91',
-                        reportBorder: '#000000',
-                    },
-                    fontFamily: {
-                        sarabun: ['Sarabun', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+    
+    .font-prompt {
+      font-family: 'Prompt', sans-serif;
+    }
 
-    <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f1f5f9;
-            color: #1e293b;
-        }
+    /* Reference Theme Header Background Color */
+    .bg-report-header {
+      background-color: #365f91;
+    }
+    .text-report-header {
+      color: #365f91;
+    }
+    .border-report-header {
+      border-color: #365f91;
+    }
 
-        /* Printable PDF Sheet Styling */
-        .pdf-page-container {
-            width: 100%;
-            max-width: 960px;
-            margin: 0 auto;
-            background: #ffffff;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
+    /* Realistic Blue Pen Slash Effect for Checkboxes */
+    .pen-slash-box {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #1e3a8a;
+      background-color: #ffffff;
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .pen-slash-box.checked::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -4px;
+      width: 30px;
+      height: 30px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M8,32 L34,8 M10,10 L30,30' stroke='%200055ff' stroke-width='4' stroke-linecap='round' opacity='0.9'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
 
-        /* Report Table Borders matching uploaded document */
-        .defect-table {
-            border-collapse: collapse;
-            width: 100%;
-            border: 2px solid #000000;
-        }
-
-        .defect-table th, 
-        .defect-table td {
-            border: 1.5px solid #000000;
-        }
-
-        /* Blue pen slash mark for PASS/NOT PASS checkboxes */
-        .check-slash-mark {
-            position: relative;
-        }
-        .check-slash-mark.active-pass::after {
-            content: '';
-            position: absolute;
-            top: -12px;
-            left: -8px;
-            width: 48px;
-            height: 38px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'%3E%3Cpath d='M10 50 L40 75 L95 10' fill='none' stroke='%200028e' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center center;
-            background-size: contain;
-            pointer-events: none;
-        }
-        .check-slash-mark.active-fail::after {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -6px;
-            width: 40px;
-            height: 36px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath d='M15 15 L65 65 M65 15 L15 65' fill='none' stroke='%23dc2626' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center center;
-            background-size: contain;
-            pointer-events: none;
-        }
-
-        /* Prevent breaking item blocks inside PDF pages */
-        .defect-item-row {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-
-        /* Print Media Overrides */
-        @media print {
-            body {
-                background: #ffffff !important;
-                padding: 0 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .pdf-page-container {
-                box-shadow: none !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .defect-table {
-                border: 2px solid #000 !important;
-            }
-            .defect-table th, .defect-table td {
-                border: 1.5px solid #000 !important;
-            }
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-        }
-    </style>
+    /* Print styling rules */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .page-break-inside-avoid {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .report-paper {
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      .bg-report-header {
+        background-color: #365f91 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
 </head>
-<body class="min-h-screen pb-12">
+<body class="min-h-screen flex flex-col items-center pb-12">
 
-    <!-- Top Action Toolbar (Hidden during PDF export / print) -->
-    <header class="no-print bg-slate-900 text-white sticky top-0 z-40 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">
-                    <i class="fa-solid fa-clipboard-check text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">แอพตรวจบ้าน ครั้งที่ 3 - List of Defect</h1>
-                    <p class="text-xs text-slate-400">ระบบบันทึกรายการแก้ไขบ้าน / ติดตามงานย้อนกลับ</p>
-                </div>
-            </div>
+  <!-- ==================== TOP ACTION BAR (EDITOR CONTROLS) ==================== -->
+  <header class="no-print w-full bg-slate-800 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-clipboard-check text-blue-400 text-2xl"></i>
+        <h1 class="font-prompt font-bold text-lg sm:text-xl tracking-wide">แอพตรวจบ้าน (ครั้งที่ 3)</h1>
+        <span id="sync-status-badge" class="ml-2 text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <i class="fa-solid fa-hard-drive mr-1"></i>โหมดสแตนดาร์ด
+        </span>
+      </div>
 
-            <!-- Dashboard Counters -->
-            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg text-xs">
-                <span class="text-slate-300">รวม <strong id="stat-total" class="text-white text-sm">0</strong></span>
-                <span class="border-r border-slate-600 h-4 mx-1"></span>
-                <span class="text-emerald-400"><i class="fa-solid fa-check"></i> ผ่าน <strong id="stat-pass" class="text-white text-sm">0</strong></span>
-                <span class="border-r border-slate-600 h-4 mx-1"></span>
-                <span class="text-red-400"><i class="fa-solid fa-xmark"></i> ไม่ผ่าน <strong id="stat-fail" class="text-white text-sm">0</strong></span>
-                <span class="border-r border-slate-600 h-4 mx-1"></span>
-                <span class="text-amber-400"><i class="fa-regular fa-clock"></i> รอตรวจ <strong id="stat-pending" class="text-white text-sm">0</strong></span>
-            </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btn-save" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล
+        </button>
+        <button id="btn-sync" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-rotate"></i> รีเฟรชข้อมูล
+        </button>
+        <button id="btn-export-pdf" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+        <button id="btn-print" class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-print"></i> พิมพ์ (Print)
+        </button>
+      </div>
+    </div>
+  </header>
 
-            <!-- Action Buttons with Prominent Cloud Save -->
-            <div class="flex items-center flex-wrap gap-2">
-                <!-- Save to Cloud Button -->
-                <button id="btn-cloud-save" onclick="saveToCloud()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg animate-pulse">
-                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> บันทึกข้อมูล (Save)
-                </button>
+  <!-- Toast Notification Box -->
+  <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
 
-                <!-- Sync/Refresh Button -->
-                <button onclick="loadFromCloud(true)" title="ดึงข้อมูลล่าสุดจาก Cloud" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5">
-                    <i class="fa-solid fa-rotate"></i> Sync
-                </button>
+  <!-- Main Container -->
+  <main class="w-full max-w-5xl px-2 sm:px-4 py-6 flex flex-col gap-6">
 
-                <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
-                    <i class="fa-solid fa-plus"></i> เพิ่มรายการ
-                </button>
+    <!-- ==================== FORM BUILDER PANEL ==================== -->
+    <section class="no-print bg-white rounded-xl shadow-lg border border-slate-200 p-4 sm:p-6 transition-all">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <h2 class="font-prompt font-semibold text-lg text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-circle-plus text-blue-600"></i> เพิ่มรายการ Defect ใหม่
+        </h2>
+        <span class="text-xs text-slate-500 font-medium">เพิ่มข้อมูลได้อย่างรวดเร็วและยืดหยุ่น</span>
+      </div>
 
-                <button onclick="exportToPDF()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
-                    <i class="fa-solid fa-file-pdf"></i> Export PDF
-                </button>
-
-                <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-print"></i> พิมพ์ / Print
-                </button>
-
-                <div class="relative group">
-                    <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-700">
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                    <div class="hidden group-hover:block absolute right-0 top-full mt-1 w-48 bg-white text-slate-800 rounded-lg shadow-xl border border-slate-200 py-1 text-sm z-50">
-                        <button onclick="exportJSON()" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-download text-slate-500"></i> สำรองข้อมูล (JSON)
-                        </button>
-                        <button onclick="triggerImportJSON()" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-upload text-slate-500"></i> นำเข้าข้อมูล (JSON)
-                        </button>
-                        <input type="file" id="json-file-input" accept=".json" class="hidden" onchange="importJSON(event)">
-                        <hr class="my-1">
-                        <button onclick="confirmResetData()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2">
-                            <i class="fa-solid fa-trash-can"></i> รีเซ็ตข้อมูลตัวอย่าง
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Status Notification Bar -->
-        <div id="save-status-bar" class="bg-slate-800 text-slate-300 text-xs px-4 py-1 text-right border-t border-slate-800">
-            <span id="save-status-text"><i class="fa-solid fa-cloud"></i> พร้อมบันทึกข้อมูล</span>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-6xl mx-auto p-4 sm:p-6">
-
-        <!-- Info Control Box (Form for editing metadata easily) -->
-        <div class="no-print bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
-            <div class="flex items-center justify-between mb-3 border-b pb-2">
-                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
-                    <i class="fa-solid fa-sliders text-blue-600"></i> ข้อมูลโครงการและหัวข้อรายงาน
-                </h3>
-                <span class="text-xs text-slate-500">ข้อมูล Customer Name และบ้านเลขที่ถูกล็อคตามสัญญา</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Project (ชื่อโครงการ)</label>
-                    <input type="text" id="meta-project-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">No (ครั้งที่)</label>
-                    <input type="text" id="meta-no-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1 text-slate-400">บ้านเลขที่ <i class="fa-solid fa-lock text-amber-500"></i></label>
-                    <input type="text" id="meta-house-input" value="162/307" disabled readonly class="w-full border border-slate-200 bg-slate-100 text-slate-500 rounded px-2.5 py-1.5 font-semibold cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-blue-600 mb-1">Date (เลือก/กรอกทีหลังได้)</label>
-                    <input type="date" id="meta-date-input" onchange="updateMetadata()" class="w-full border border-blue-400 bg-blue-50/50 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1 text-slate-400">Customer Name <i class="fa-solid fa-lock text-amber-500"></i></label>
-                    <input type="text" id="meta-customer-input" value="k. วรวิช ,ปิยวรรณ" disabled readonly class="w-full border border-slate-200 bg-slate-100 text-slate-500 rounded px-2.5 py-1.5 font-semibold cursor-not-allowed">
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= PREVIEW / EXPORT CONTAINER ================= -->
-        <div id="report-document" class="pdf-page-container p-4 sm:p-6 text-black">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        
+        <!-- Left: Image Upload & Preview Box -->
+        <div class="md:col-span-4 flex flex-col gap-2">
+          <label class="block text-sm font-semibold text-slate-700">รูปภาพจุดชำรุด (ไม่บังคับ):</label>
+          
+          <div id="drop-zone" class="relative border-2 border-dashed border-slate-300 rounded-lg p-3 flex flex-col items-center justify-center min-h-[150px] bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer group">
+            <input type="file" id="image-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
             
-            <!-- Table Header matching reference image -->
-            <table class="defect-table mb-0">
-                <thead>
-                    <!-- Main Header Banner Row -->
-                    <tr class="bg-reportHeader text-white text-center">
-                        <th colspan="2" class="py-2.5 px-4 text-2xl sm:text-3xl font-bold tracking-wide underline underline-offset-4 decoration-2" style="background-color: #365f91; color: white;">
-                            List of Defect
-                        </th>
-                    </tr>
-                    <!-- Project Details Metadata Row -->
-                    <tr class="bg-white text-xs sm:text-sm font-normal text-black">
-                        <td class="p-2 w-1/2 align-top leading-relaxed border-r border-black">
-                            <div class="flex items-center gap-1">
-                                <span class="font-bold whitespace-nowrap">Project :</span>
-                                <span id="disp-project" class="font-medium">เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์</span>
-                            </div>
-                            <div class="flex items-center gap-1 mt-1">
-                                <span class="font-bold whitespace-nowrap">Date :</span>
-                                <span id="disp-date" class="font-medium"></span>
-                            </div>
-                        </td>
-                        <td class="p-2 w-1/2 align-top leading-relaxed">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="font-bold">No :</span>
-                                    <span id="disp-no" class="font-medium ml-1">3</span>
-                                </div>
-                                <div>
-                                    <span class="font-bold">บ้านเลขที่ :</span>
-                                    <span id="disp-house" class="font-semibold ml-1">162/307</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1 mt-1">
-                                <span class="font-bold whitespace-nowrap">Customer Name :</span>
-                                <span id="disp-customer" class="font-semibold">k. วรวิช ,ปิยวรรณ</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- Column Headers -->
-    <!-- Firebase SDK Imports & Real-time Cloud Storage Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            <div id="upload-placeholder" class="text-center flex flex-col items-center pointer-events-none">
+              <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                <i class="fa-solid fa-camera text-lg"></i>
+              </div>
+              <p class="text-xs font-semibold text-slate-700">คลิกหรือลากรูปภาพมาวาง</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">ระบบจะบีบอัดภาพอัตโนมัติ</p>
+            </div>
 
-        // Environment Variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'defect-report-house-162-307';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDemoKeyOnlyForFallback12345",
-            authDomain: "defect-report-app.firebaseapp.com",
-            projectId: "defect-report-app",
-            storageBucket: "defect-report-app.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:demo"
-        };
+            <div id="upload-preview-container" class="hidden relative w-full h-36 flex items-center justify-center bg-black/5 rounded overflow-hidden">
+              <img id="upload-preview-img" src="" alt="Preview" class="max-h-full max-w-full object-contain" />
+              <button id="btn-remove-preview" type="button" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-700 z-20">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        </div>
 
-        let app, db, auth;
-        let currentUser = null;
-        let isCloudAvailable = false;
+        <!-- Right: Text & Details Input -->
+        <div class="md:col-span-8 flex flex-col justify-between gap-3">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="input-area" class="block text-sm font-semibold text-slate-700 mb-1">บริเวณ / หมวดงาน:</label>
+              <select id="input-area" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="งานทั่วไป">งานทั่วไป</option>
+                <option value="งานหลังคา">งานหลังคา</option>
+                <option value="งานสี">งานสี / งานผนัง</option>
+                <option value="งานระบบไฟฟ้า">งานระบบไฟฟ้า</option>
+                <option value="งานระบบสุขาภิบาล">งานระบบสุขาภิบาล</option>
+                <option value="งานฝ้าเพดาน">งานฝ้าเพดาน</option>
+                <option value="งานประตู-หน้าต่าง">งานประตู-หน้าต่าง</option>
+                <option value="งานพื้น-กระเบื้อง">งานพื้น-กระเบื้อง</option>
+                <option value="งานภายนอก">งานภายนอก/โครงสร้าง</option>
+              </select>
+            </div>
 
-        // Document reference for this specific house inspection report
-        function getDocRef() {
-            return doc(db, 'artifacts', appId, 'public', 'data', 'reports', 'house_162_307');
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">ข้อความลัดยอดนิยม:</label>
+              <select id="quick-preset" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">-- เลือกข้อความสำเร็จรูป --</option>
+                <option value="ตรวจพบรอยแตกร้าวบริเวณผนังปูนฉาบ ให้ดำเนินการโป๊วเก็บสีให้เรียบร้อย">รอยแตกร้าวผนัง</option>
+                <option value="เก็บงานสีคราบเปื้อนและรอยด่าง ให้สม่ำเสมอสวยงาม">เก็บงานสีคราบเปื้อน</option>
+                <option value="ตรวจพบรอยคราบน้ำรั่วซึมบริเวณฝ้าเพดาน ให้แก้ไขจุดรั่วซึมและเปลี่ยนแผ่นฝ้า">คราบน้ำรั่วซึมฝ้า</option>
+                <option value="ปรับแต่งระดับบานประตู-หน้าต่าง ติดขัด ปิดไม่สนิท">บานประตู/หน้าต่างติดขัด</option>
+                <option value="ซีลซิลิโคนตามแนววงกบและขอบกระจกให้เรียบร้อยกันน้ำซึม">ซีลซิลิโคนวงกบ</option>
+                <option value="ยาแนวพื้นกระเบื้องหลุดร่อน/เป็นโพรง ให้เก็บงานยาแนวใหม่">งานยาแนวกระเบื้อง</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="input-comment" class="block text-sm font-semibold text-slate-700 mb-1">รายละเอียดจุด Defect และคำอธิบาย:</label>
+            <textarea id="input-comment" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-slate-400" placeholder="พิมพ์รายละเอียดจุดที่ต้องแก้ไข..."></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-slate-600">
+              <input type="checkbox" id="input-closing-text" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+              <span>แสดงข้อความท้ายรายการ: <u>พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง</u></span>
+            </label>
+
+            <button id="add-item-btn" type="button" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-prompt font-semibold rounded-lg shadow-md transition flex items-center gap-2 text-sm sm:text-base">
+              <i class="fa-solid fa-plus-circle text-lg"></i> เพิ่มรายการลงใบรายงาน
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== REPORT DOCUMENT CONTAINER (PAPER LOOK) ==================== -->
+    <div id="report-paper" class="report-paper w-full bg-white shadow-2xl rounded-sm border border-slate-300 p-4 sm:p-8 flex flex-col gap-0 text-slate-900">
+      
+      <!-- TOP BANNER -->
+      <div class="bg-report-header text-white text-center py-3.5 px-2 font-prompt font-bold text-2xl sm:text-3xl tracking-wider rounded-t-sm shadow-inner">
+        <span class="underline underline-offset-4 decoration-2">List of Defect</span>
+      </div>
+
+      <!-- SUB-HEADER INFO BAR -->
+      <div class="bg-report-header text-white px-4 py-3 text-xs sm:text-sm border-t border-blue-400/30 flex flex-wrap items-center justify-between gap-y-2">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-1 w-full sm:w-auto">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold">Project :</span>
+            <input type="text" id="meta-project" value="เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์" class="bg-transparent border-b border-white/50 focus:border-white focus:outline-none px-1 text-white font-medium text-xs sm:text-sm w-56 sm:w-72" />
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="font-bold">No :</span>
+            <span class="font-semibold bg-white/20 px-2 py-0.5 rounded">3</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-1 w-full sm:w-auto">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold">บ้านเลขที่ :</span>
+            <!-- Locked Read-only house number -->
+            <span class="font-bold text-amber-300 bg-black/20 px-2 py-0.5 rounded border border-amber-300/40">162/307</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold">Date :</span>
+            <input type="date" id="meta-date" class="bg-white/10 text-white border border-white/30 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:bg-white focus:text-slate-900 transition" />
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold">Customer Name :</span>
+            <!-- Locked Read-only Customer Name -->
+            <span class="font-bold text-white bg-black/20 px-2 py-0.5 rounded">k. วรวิช ,ปิยวรรณ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TWO-COLUMN TABLE HEADER -->
+      <div class="bg-report-header text-white font-prompt font-bold text-sm sm:text-base flex border-t border-white/30 text-center uppercase tracking-wide">
+        <div class="w-[40%] py-2.5 px-2 border-r border-white/30">
+          <span class="underline underline-offset-2">ITEM</span>
+        </div>
+        <div class="w-[60%] py-2.5 px-2">
+          <span class="underline underline-offset-2">DESCRIPTION OF DEFECT AND COMMENT</span>
+        </div>
+      </div>
+
+      <!-- ITEMS LIST CONTAINER -->
+      <div id="defect-items-list" class="flex flex-col min-h-[400px]">
+        <!-- Dynamically rendered rows will appear here -->
+      </div>
+
+      <!-- REPORT FOOTER SUMMARY -->
+      <div class="mt-6 pt-4 border-t border-slate-300 flex flex-wrap justify-between items-center text-xs text-slate-500 no-print">
+        <span>จำนวนรายการทั้งหมด: <strong id="total-count-badge" class="text-blue-600">0</strong> รายการ</span>
+        <span>แอพตรวจบ้าน ครั้งที่ 3 - เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์ (162/307)</span>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==================== RED ANNOTATION MARKUP MODAL ==================== -->
+  <div id="annotation-modal" class="fixed inset-0 bg-black/75 z-50 hidden flex items-center justify-center p-2 sm:p-4 no-print">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
+        <h3 class="font-prompt font-semibold text-base sm:text-lg flex items-center gap-2">
+          <i class="fa-solid fa-pen-ruler text-rose-400"></i> วงกลมสีแดงชี้จุดเสีย / วาดภาพระบุตำแหน่ง
+        </h3>
+        <button id="btn-close-annotation" class="text-slate-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-2 sm:p-4 bg-slate-900 flex-1 flex items-center justify-center overflow-auto relative min-h-[300px]">
+        <canvas id="annotation-canvas" class="max-w-full max-h-[60vh] bg-black shadow-lg cursor-crosshair rounded border border-slate-700"></canvas>
+      </div>
+
+      <!-- Markup Tools Toolbar -->
+      <div class="p-3 bg-slate-100 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button id="tool-circle" class="px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded shadow hover:bg-rose-700 flex items-center gap-1 active">
+            <i class="fa-regular fa-circle"></i> วงกลมสีแดง
+          </button>
+          <button id="tool-arrow" class="px-3 py-1.5 bg-slate-700 text-white text-xs font-semibold rounded shadow hover:bg-slate-800 flex items-center gap-1">
+            <i class="fa-solid fa-arrow-right"></i> ลูกศร
+          </button>
+          <button id="tool-freehand" class="px-3 py-1.5 bg-slate-700 text-white text-xs font-semibold rounded shadow hover:bg-slate-800 flex items-center gap-1">
+            <i class="fa-solid fa-paintbrush"></i> วาดอิสระ
+          </button>
+          <button id="btn-undo-draw" class="px-2.5 py-1.5 bg-slate-300 text-slate-700 text-xs font-semibold rounded hover:bg-slate-400 flex items-center gap-1 ml-2">
+            <i class="fa-solid fa-rotate-left"></i> ย้อนกลับ
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-cancel-annotation" class="px-4 py-1.5 bg-slate-300 text-slate-700 text-xs font-semibold rounded hover:bg-slate-400">
+            ยกเลิก
+          </button>
+          <button id="btn-save-annotation" class="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded shadow hover:bg-blue-700 flex items-center gap-1">
+            <i class="fa-solid fa-check"></i> บันทึกภาพที่แก้ไข
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Inline File Input for Direct Photo Replacement in Table Rows -->
+  <input type="file" id="row-file-replacer" accept="image/*" class="hidden" />
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script type="module">
+    // Firebase Imports (standard dynamic import capability)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Initialize Global App State
+    const STORAGE_KEY = 'defect_report_v3_data_162_307';
+    
+    let state = {
+      meta: {
+        project: "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
+        no: "3",
+        houseNo: "162/307", // Locked
+        date: "",
+        customerName: "k. วรวิช ,ปิยวรรณ" // Locked
+      },
+      items: []
+    };
+
+    let selectedImageDataUrl = null;
+    let activeAnnotateItemId = null;
+
+    // Default Initial Sample Items if LocalStorage is completely empty
+    const DEFAULT_ITEMS = [
+      {
+        id: 'item_def_1',
+        image: '', // empty photo placeholder test
+        description: 'ตรวจพบรอยแตกร้าวบริเวณผนังปูนฉาบข้างประตูทางเข้า ให้ดำเนินการโป๊วเก็บสีให้เรียบร้อย',
+        area: 'งานสี / งานผนัง',
+        status: 'NONE', // 'PASS', 'NOT_PASS', or 'NONE'
+        showClosingText: true
+      },
+      {
+        id: 'item_def_2',
+        image: '',
+        description: 'เก็บงานสีคราบเปื้อนและรอยด่างบริเวณผนังโถงบันได ให้สม่ำเสมอสวยงาม',
+        area: 'งานสี',
+        status: 'NONE',
+        showClosingText: true
+      }
+    ];
+
+    // Canvas Markup State
+    let canvas, ctx;
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let currentTool = 'circle'; // 'circle', 'arrow', 'freehand'
+    let baseImage = null;
+    let drawHistory = [];
+
+    // ==================== CORE FUNCTIONS & HANDLERS ====================
+
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-700 text-white',
+        error: 'bg-rose-700 text-white',
+        info: 'bg-slate-800 text-white border border-slate-600'
+      };
+
+      toast.className = `px-4 py-2.5 rounded-lg shadow-xl text-xs sm:text-sm font-prompt font-medium transition-all transform translate-y-2 opacity-0 flex items-center gap-2 pointer-events-auto ${bgColors[type] || bgColors.info}`;
+      toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i> ${message}`;
+      
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Canvas Compression Tool (Prevents FileReader and Firestore hanging)
+    function compressImageFile(file) {
+      return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+          reject(new Error("ไฟล์ไม่ใช่รูปภาพ"));
+          return;
         }
 
-        // Initialize Firebase Authentication & Firestore
-        async function initFirebase() {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 600;
+              let width = img.width;
+              let height = img.height;
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+              if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+              }
 
-                currentUser = auth.currentUser;
-                isCloudAvailable = true;
-                updateStatusText('<i class="fa-solid fa-cloud-check text-emerald-400"></i> เชื่อมต่อ Cloud เรียบร้อยแล้ว');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
 
-                // Real-time synchronization listener
-                onSnapshot(getDocRef(), (snapshot) => {
-                    if (snapshot.exists()) {
-                        const cloudData = snapshot.data();
-                        if (cloudData && cloudData.items) {
-                            window.appState = {
-                                ...cloudData,
-                                // Enforce fixed locked fields
-                                houseNo: "162/307",
-                                customerName: "k. วรวิช ,ปิยวรรณ"
-                            };
-                            localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
-                            window.renderApp();
-                            const nowStr = new Date().toLocaleTimeString('th-TH');
-                            updateStatusText(`<i class="fa-solid fa-rotate text-blue-400"></i> ซิงค์ข้อมูลล่าสุดเมื่อ ${nowStr}`);
-                        }
-                    }
-                }, (error) => {
-                    console.warn("Firestore snapshot listener error:", error);
-                    updateStatusText('<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> ใช้งานแบบออฟไลน์ (บันทึกในเครื่อง)');
-                });
-
+              // Compress to JPEG 0.65 quality
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+              resolve(compressedDataUrl);
             } catch (err) {
-                console.warn("Firebase initialization failed, falling back to local storage:", err);
-                isCloudAvailable = false;
-                updateStatusText('<i class="fa-solid fa-hard-drive"></i> บันทึกข้อมูลในเครื่อง (Offline Mode)');
+              console.warn("Canvas compression failed, falling back to raw DataURL", err);
+              resolve(e.target.result);
             }
-        }
-
-        // Save data to Firestore Cloud
-        window.saveToCloud = async function() {
-            const btn = document.getElementById('btn-cloud-save');
-            const oldText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
-            updateStatusText('<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> กำลังอัปโหลดข้อมูลลง Cloud...');
-
-            // Always update local storage first
-            localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
-
-            if (!isCloudAvailable || !auth.currentUser) {
-                btn.disabled = false;
-                btn.innerHTML = oldText;
-                alert("บันทึกข้อมูลในเครื่องเรียบร้อยแล้ว (โหมดออฟไลน์)");
-                updateStatusText('<i class="fa-solid fa-check text-emerald-400"></i> บันทึกในเครื่องแล้ว');
-                return;
-            }
-
-            try {
-                // Ensure photos are compressed before pushing to Firestore
-                const payload = {
-                    ...window.appState,
-                    project: window.appState.project || "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
-                    no: window.appState.no || "3",
-                    houseNo: "162/307", // Locked
-                    customerName: "k. วรวิช ,ปิยวรรณ", // Locked
-                    date: window.appState.date || "",
-                    lastSavedAt: new Date().toISOString(),
-                    savedBy: auth.currentUser.uid
-                };
-
-                await setDoc(getDocRef(), payload);
-                const timeStr = new Date().toLocaleTimeString('th-TH');
-                updateStatusText(`<i class="fa-solid fa-cloud-check text-emerald-400"></i> บันทึกลง Cloud สำเร็จเมื่อ ${timeStr}`);
-                
-                // Temporary feedback on button
-                btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg";
-                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> บันทึกเรียบร้อย!';
-                
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.className = "bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm px-4 py-2 rounded-lg font-bold transition flex items-center gap-2 shadow-lg";
-                    btn.innerHTML = oldText;
-                }, 2000);
-
-            } catch (err) {
-                console.error("Save to Firestore failed:", err);
-                btn.disabled = false;
-                btn.innerHTML = oldText;
-                alert("เกิดข้อผิดพลาดในการบันทึกลง Cloud: " + err.message);
-                updateStatusText('<i class="fa-solid fa-xmark text-red-400"></i> บันทึกลง Cloud ไม่สำเร็จ');
-            }
+          };
+          img.onerror = () => resolve(e.target.result);
+          img.src = e.target.result;
         };
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
 
-        window.loadFromCloud = async function(manualAlert = false) {
-            if (!isCloudAvailable) return;
-            try {
-                const snap = await getDoc(getDocRef());
-                if (snap.exists()) {
-                    window.appState = snap.data();
-                    window.appState.houseNo = "162/307";
-                    window.appState.customerName = "k. วรวิช ,ปิยวรรณ";
-                    localStorage.setItem('home_defect_report_v3', JSON.stringify(window.appState));
-                    window.renderApp();
-                    if (manualAlert) alert("ดึงข้อมูลล่าสุดจาก Cloud เรียบร้อยแล้ว");
-                }
-            } catch (e) {
-                console.error("Error manual load:", e);
+    // Load State from Local Storage
+    function loadLocalData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.items)) {
+            state.items = parsed.items;
+            if (parsed.meta) {
+              state.meta = { ...state.meta, ...parsed.meta };
             }
-        };
-
-        function updateStatusText(htmlStr) {
-            const el = document.getElementById('save-status-text');
-            if (el) el.innerHTML = htmlStr;
+          }
+        } else {
+          state.items = [...DEFAULT_ITEMS];
         }
+      } catch (err) {
+        console.error("Error loading local storage:", err);
+        state.items = [...DEFAULT_ITEMS];
+      }
+    }
 
-        // Start Firebase on DOM load
-        window.addEventListener('DOMContentLoaded', () => {
-            initFirebase();
-        });
-    </script>
+    // Save State synchronously to Local Storage
+    function saveLocalData() {
+      try {
+        state.meta.project = document.getElementById('meta-project')?.value || state.meta.project;
+        state.meta.date = document.getElementById('meta-date')?.value || state.meta.date;
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        return true;
+      } catch (err) {
+        console.error("LocalStorage quota error:", err);
+        showToast("พื้นที่เก็บข้อมูลในเบราว์เซอร์เต็ม แต่แสดงผลบนหน้าจอแล้ว", "info");
+        return false;
+      }
+    }
 
-    <!-- App State & DOM Logic -->
-    <script>
-        // Data Structure with locked fields pre-set
-        window.appState = {
-            project: "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
-            no: "3",
-            houseNo: "162/307", // LOCKED
-            date: "", // Default empty as requested
-            customerName: "k. วรวิช ,ปิยวรรณ", // LOCKED
-            items: []
-        };
+    // Render Report Table Rows
+    function renderReport() {
+      const container = document.getElementById('defect-items-list');
+      const countBadge = document.getElementById('total-count-badge');
+      if (!container) return;
 
-        // Standard Default Phrase
-        const STANDARD_NOTE = "พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง";
+      if (countBadge) countBadge.textContent = state.items.length;
 
-        // Preloaded Initial Mock Data matching the user's reference image
-        const DEFAULT_ITEMS = [
-            {
-                id: "def_1",
-                photo: createMockRoofImageSvg("roof1"),
-                comment: "พบแผ่นครอบหน้าหลังคา เสมือนยิงสกรูไม่ครบ ตรวจสอบการติดตั้ง แก้ไขยิงสกรูให้ครบ",
-                appendNote: true,
-                location: "งานหลังคา",
-                status: "pass"
-            },
-            {
-                id: "def_2",
-                photo: createMockRoofImageSvg("roof2"),
-                comment: "พบแผ่นกระเบื้องหลังคาติดตั้งไม่แนบสนิท ตรวจสอบแก้ไขติดตั้งเก็บงานให้เรียบร้อยทั้งหมด",
-                appendNote: true,
-                location: "งานหลังคา",
-                status: "pass"
-            }
-        ];
+      if (state.items.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 px-4 text-center text-slate-400 font-prompt border-b border-slate-200">
+            <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
+            <p class="text-sm">ยังไม่มีรายการ Defect ในใบรายงานนี้</p>
+            <p class="text-xs text-slate-400 mt-1">กดปุ่ม "+ เพิ่มรายการลงใบรายงาน" ในแถบด้านบนเพื่อเริ่มเพิ่มรายการ</p>
+          </div>
+        `;
+        return;
+      }
 
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSavedData();
-            renderApp();
-            setupCanvasEvents();
-        });
+      let html = '';
 
-        function saveData() {
-            // Force strict values for locked fields
-            appState.houseNo = "162/307";
-            appState.customerName = "k. วรวิช ,ปิยวรรณ";
+      state.items.forEach((item, index) => {
+        const itemNumber = index + 1;
+        const isPass = item.status === 'PASS';
+        const isNotPass = item.status === 'NOT_PASS';
 
-            localStorage.setItem('home_defect_report_v3', JSON.stringify(appState));
-            updateCounters();
-        }
-
-        function loadSavedData() {
-            const saved = localStorage.getItem('home_defect_report_v3');
-            if (saved) {
-                try {
-                    appState = JSON.parse(saved);
-                } catch (e) {
-                    appState.items = DEFAULT_ITEMS;
-                }
-            } else {
-                appState.items = DEFAULT_ITEMS;
-            }
-
-            // Always enforce locked values
-            appState.houseNo = "162/307";
-            appState.customerName = "k. วรวิช ,ปิยวรรณ";
-            if (!appState.no) appState.no = "3";
-            if (!appState.project) appState.project = "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์";
-
-            // Set Form metadata inputs
-            document.getElementById('meta-project-input').value = appState.project || "";
-            document.getElementById('meta-no-input').value = appState.no || "3";
-            document.getElementById('meta-house-input').value = "162/307";
-            document.getElementById('meta-date-input').value = appState.date || "";
-            document.getElementById('meta-customer-input').value = "k. วรวิช ,ปิยวรรณ";
-        }
-
-        // Render Report Document
-        window.renderApp = function() {
-            // Enforce locked metadata rendering
-            document.getElementById('disp-project').innerText = appState.project || "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์";
-            document.getElementById('disp-no').innerText = appState.no || "3";
-            document.getElementById('disp-house').innerText = "162/307";
-            document.getElementById('disp-date').innerText = appState.date ? formatDateThai(appState.date) : "";
-            document.getElementById('disp-customer').innerText = "k. วรวิช ,ปิยวรรณ";
-
-            // Render Items Table List
-            const listContainer = document.getElementById('defect-items-list');
-            listContainer.innerHTML = '';
-
-            if (!appState.items || appState.items.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="p-8 text-center text-slate-400 no-print">
-                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
-                        <p>ยังไม่มีรายการ defect - กดปุ่ม "+ เพิ่มรายการ" ด้านบนเพื่อเริ่มบันทึก</p>
-                    </div>
-                `;
-                updateCounters();
-                return;
-            }
-
-            appState.items.forEach((item, index) => {
-                const itemIndex = index + 1;
-                const isPass = item.status === 'pass';
-                const isFail = item.status === 'fail';
-
-                const rowEl = document.createElement('div');
-                rowEl.className = 'defect-item-row flex flex-col border-b border-black last:border-b-0 bg-white relative group';
-
-                rowEl.innerHTML = `
-                    <!-- Action Bar (Hidden in PDF/Print) -->
-                    <div class="no-print bg-slate-100 border-b border-slate-300 px-3 py-1 flex items-center justify-between text-xs text-slate-600">
-                        <div class="font-bold text-slate-800 flex items-center gap-2">
-                            <span>รายการที่ #${itemIndex}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded font-normal ${item.status==='pass'?'bg-emerald-100 text-emerald-800':item.status==='fail'?'bg-red-100 text-red-800':'bg-amber-100 text-amber-800'}">
-                                ${item.status==='pass'?'ผ่าน (PASS)':item.status==='fail'?'ไม่ผ่าน (NOT PASS)':'รอตรวจ'}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30"' : ''} title="ย้ายขึ้น" class="hover:text-blue-600 px-1">
-                                <i class="fa-solid fa-arrow-up"></i>
-                            </button>
-                            <button onclick="moveItem(${index}, 1)" ${index === appState.items.length - 1 ? 'disabled class="opacity-30"' : ''} title="ย้ายลง" class="hover:text-blue-600 px-1">
-                                <i class="fa-solid fa-arrow-down"></i>
-                            </button>
-                            <button onclick="openEditModal('${item.id}')" class="hover:text-blue-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded shadow-sm">
-                                <i class="fa-solid fa-pen"></i> แก้ไข
-                            </button>
-                            <button onclick="deleteDefectItem('${item.id}')" class="hover:text-red-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded text-red-600 shadow-sm">
-                                <i class="fa-solid fa-trash-can"></i> ลบ
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Defect Content Row matching uploaded template -->
-                    <div class="flex flex-col md:flex-row w-full min-h-[220px]">
-                        <!-- Left Column: ITEM Photo -->
-                        <div class="w-full md:w-[40%] p-2.5 border-b md:border-b-0 md:border-r border-black flex flex-col items-center justify-center bg-white relative">
-                            <img src="${item.photo}" class="max-w-full max-h-[240px] w-auto h-auto object-contain rounded border border-slate-200">
-                        </div>
-
-                        <!-- Right Column: DESCRIPTION OF DEFECT AND COMMENT -->
-                        <div class="w-full md:w-[60%] p-3.5 flex flex-col justify-between bg-white leading-relaxed text-sm sm:text-base text-black">
-                            <!-- Comment Text -->
-                            <div class="space-y-2">
-                                <p class="text-base sm:text-lg font-normal text-slate-900 leading-snug">
-                                    ${escapeHtml(item.comment)}
-                                    ${item.appendNote ? `<span class="underline font-semibold ml-1">${STANDARD_NOTE}</span>` : ''}
-                                </p>
-                            </div>
-
-                            <!-- Bottom Status and Location Row -->
-                            <div class="mt-4 pt-3 border-t border-slate-200 flex items-end justify-between text-sm sm:text-base">
-                                
-                                <!-- Interactive PASS / NOT PASS Click Boxes -->
-                                <div class="flex items-center gap-6 font-bold tracking-wide">
-                                    <div onclick="toggleStatus('${item.id}', 'pass')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ผ่าน">
-                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isPass ? 'active-pass' : ''} group-hover/btn:border-blue-600">
-                                        </div>
-                                        <span class="${isPass ? 'text-black font-extrabold' : 'text-slate-700'}">PASS</span>
-                                    </div>
-
-                                    <div onclick="toggleStatus('${item.id}', 'fail')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ไม่ผ่าน">
-                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isFail ? 'active-fail' : ''} group-hover/btn:border-red-600">
-                                        </div>
-                                        <span class="${isFail ? 'text-black font-extrabold' : 'text-slate-700'}">NOT PASS</span>
-                                    </div>
-                                </div>
-
-                                <!-- Location Zone Tag -->
-                                <div class="text-xs sm:text-sm font-semibold text-slate-800">
-                                    บริเวณ : <span class="font-normal underline">${item.location || 'งานทั่วไป'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Grey Item Index Separator Bar -->
-                    <div class="bg-slate-200 border-t border-black px-2 py-0.5 text-xs font-bold text-black">
-                        ${itemIndex}
-                    </div>
-                `;
-
-                listContainer.appendChild(rowEl);
-            });
-
-            updateCounters();
-        };
-
-        // Live Metadata update
-        function updateMetadata() {
-            appState.project = document.getElementById('meta-project-input').value;
-            appState.no = document.getElementById('meta-no-input').value;
-            appState.date = document.getElementById('meta-date-input').value;
-
-            // Always enforce fixed values
-            appState.houseNo = "162/307";
-            appState.customerName = "k. วรวิช ,ปิยวรรณ";
-
-            document.getElementById('disp-project').innerText = appState.project || "-";
-            document.getElementById('disp-no').innerText = appState.no || "3";
-            document.getElementById('disp-date').innerText = appState.date ? formatDateThai(appState.date) : "";
-
-            saveData();
-        }
-
-        // Image Compression Helper before storing
-        function compressImage(base64Str, maxWidth = 800, quality = 0.75) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width;
-                    let h = img.height;
-                    if (w > maxWidth) {
-                        h = Math.round((h * maxWidth) / w);
-                        w = maxWidth;
-                    }
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = () => resolve(base64Str);
-                img.src = base64Str;
-            });
-        }
-
-        // Format Date to Thai String
-        function formatDateThai(dateStr) {
-            if (!dateStr) return '';
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                const y = parseInt(parts[0]) + 543;
-                return `${parts[2]}-${parts[1]}-${y}`;
-            }
-            return dateStr;
-        }
-
-        // Handle Photo File Upload with Auto-compression
-        async function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                // Compress image
-                currentPhotoBase64 = await compressImage(e.target.result, 800, 0.75);
-                document.getElementById('modal-photo-img').src = currentPhotoBase64;
-                document.getElementById('modal-photo-img').classList.remove('hidden');
-                document.getElementById('modal-photo-placeholder').classList.add('hidden');
-                document.getElementById('btn-open-draw').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Save Form Item
-        async function saveDefectItem(event) {
-            event.preventDefault();
-
-            if (!currentPhotoBase64) {
-                alert("กรุณาแนบรูปภาพจุดบกพร่องก่อนบันทึกรายการ");
-                return;
-            }
-
-            const editId = document.getElementById('edit-item-id').value;
-            const comment = document.getElementById('item-comment-input').value.trim();
-            const location = document.getElementById('item-location-input').value.trim() || 'งานหลังคา';
-            const appendNote = document.getElementById('item-append-note-checkbox').checked;
+        html += `
+          <div class="page-break-inside-avoid flex flex-col border-b border-slate-300">
             
-            let status = 'pending';
-            const radios = document.getElementsByName('item-status');
-            radios.forEach(r => { if (r.checked) status = r.value; });
-
-            // Compress image before saving
-            const compressedPhoto = await compressImage(currentPhotoBase64, 800, 0.75);
-
-            if (editId) {
-                const index = appState.items.findIndex(i => i.id === editId);
-                if (index !== -1) {
-                    appState.items[index] = {
-                        ...appState.items[index],
-                        photo: compressedPhoto,
-                        comment,
-                        location,
-                        appendNote,
-                        status
-                    };
-                }
-            } else {
-                const newItem = {
-                    id: 'def_' + Date.now(),
-                    photo: compressedPhoto,
-                    comment,
-                    location,
-                    appendNote,
-                    status
-                };
-                appState.items.push(newItem);
-            }
-
-            saveData();
-            renderApp();
-            closeModal();
-
-            // Auto sync to cloud if available
-            if (window.saveToCloud) window.saveToCloud();
-        }
-
-        function loadSavedData() {
-            const saved = localStorage.getItem('home_defect_report_v3');
-            if (saved) {
-                try {
-                    appState = JSON.parse(saved);
-                } catch (e) {
-                    console.error("Error parsing saved state", e);
-                    appState.items = DEFAULT_ITEMS;
-                }
-            } else {
-                appState.items = DEFAULT_ITEMS;
-            }
-
-            // Set Form metadata inputs
-            document.getElementById('meta-project-input').value = appState.project || "";
-            document.getElementById('meta-no-input').value = appState.no || "";
-            document.getElementById('meta-house-input').value = appState.houseNo || "";
-            document.getElementById('meta-date-input').value = appState.date || "";
-            document.getElementById('meta-customer-input').value = appState.customerName || "";
-        }
-
-        // Render Report Document
-        function renderApp() {
-            // Render Metadata Header
-            document.getElementById('disp-project').innerText = appState.project || "-";
-            document.getElementById('disp-no').innerText = appState.no || "-";
-            document.getElementById('disp-house').innerText = appState.houseNo || "-";
-            document.getElementById('disp-date').innerText = appState.date || "-";
-            document.getElementById('disp-customer').innerText = appState.customerName || "-";
-
-            // Render Items Table List
-            const listContainer = document.getElementById('defect-items-list');
-            listContainer.innerHTML = '';
-
-            if (appState.items.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="p-8 text-center text-slate-400 no-print">
-                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
-                        <p>ยังไม่มีรายการ defect - กดปุ่ม "+ เพิ่มรายการ" ด้านบนเพื่อเริ่มบันทึก</p>
+            <!-- Item Content Row -->
+            <div class="flex min-h-[180px]">
+              
+              <!-- Left Column: Image (40% width) -->
+              <div class="w-[40%] p-2 sm:p-3 border-r border-slate-300 flex flex-col items-center justify-center bg-slate-50/50 relative group">
+                ${item.image ? `
+                  <div class="relative w-full h-full min-h-[140px] flex items-center justify-center overflow-hidden rounded border border-slate-200 bg-black/5">
+                    <img src="${item.image}" alt="Defect Photo ${itemNumber}" class="max-h-52 max-w-full object-contain" />
+                    
+                    <!-- Action Overlay Buttons -->
+                    <div class="no-print absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-1">
+                      <button onclick="window.openMarkupModal('${item.id}')" title="วงกลมสีแดงชี้จุดเสีย" class="px-2.5 py-1 bg-rose-600 text-white rounded text-xs font-semibold hover:bg-rose-700 flex items-center gap-1 shadow">
+                        <i class="fa-regular fa-circle"></i> วาดจุดเสีย
+                      </button>
+                      <button onclick="window.triggerReplacePhoto('${item.id}')" title="เปลี่ยนรูป" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 shadow">
+                        <i class="fa-solid fa-camera"></i> เปลี่ยน
+                      </button>
                     </div>
-                `;
-                updateCounters();
-                return;
-            }
+                  </div>
+                ` : `
+                  <!-- Placeholder Box when photo is not attached -->
+                  <div onclick="window.triggerReplacePhoto('${item.id}')" class="no-print w-full h-36 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition cursor-pointer p-2 text-center">
+                    <i class="fa-solid fa-image text-2xl mb-1"></i>
+                    <span class="text-xs font-semibold">+ คลิกเพื่อแนบรูปภาพ</span>
+                    <span class="text-[10px] text-slate-400">หรือลากรูปมาวางตรงนี้</span>
+                  </div>
+                  <div class="print:block hidden w-full h-32 border border-slate-200 bg-slate-100 flex items-center justify-center text-xs text-slate-400 italic">
+                    (ไม่มีรูปภาพแนบ)
+                  </div>
+                `}
+              </div>
 
-            appState.items.forEach((item, index) => {
-                const itemIndex = index + 1;
-                const isPass = item.status === 'pass';
-                const isFail = item.status === 'fail';
+              <!-- Right Column: Description & Inspection Checkboxes (60% width) -->
+              <div class="w-[60%] p-3 sm:p-4 flex flex-col justify-between relative">
+                
+                <!-- Action Controls (Top-right of item in edit mode) -->
+                <div class="no-print absolute top-2 right-2 flex items-center gap-1.5 opacity-80 hover:opacity-100">
+                  <button onclick="window.deleteDefectItem('${item.id}')" title="ลบรายการนี้" class="text-slate-400 hover:text-rose-600 p-1 text-sm transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
 
-                const rowEl = document.createElement('div');
-                rowEl.className = 'defect-item-row flex flex-col border-b border-black last:border-b-0 bg-white relative group';
+                <!-- Text Area / Comment Body -->
+                <div class="flex-1 pr-6 flex flex-col justify-center">
+                  <div class="text-sm sm:text-base text-slate-800 leading-relaxed font-normal whitespace-pre-line" contenteditable="true" onblur="window.updateItemDescription('${item.id}', this.innerText)">${item.description || 'ระบุรายละเอียด...'}</div>
 
-                rowEl.innerHTML = `
-                    <!-- Action Bar (Hidden in PDF/Print) -->
-                    <div class="no-print bg-slate-100 border-b border-slate-300 px-3 py-1 flex items-center justify-between text-xs text-slate-600">
-                        <div class="font-bold text-slate-800 flex items-center gap-2">
-                            <span>รายการที่ #${itemIndex}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded font-normal ${item.status==='pass'?'bg-emerald-100 text-emerald-800':item.status==='fail'?'bg-red-100 text-red-800':'bg-amber-100 text-amber-800'}">
-                                ${item.status==='pass'?'ผ่าน (PASS)':item.status==='fail'?'ไม่ผ่าน (NOT PASS)':'รอตรวจ'}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30"' : ''} title="ย้ายขึ้น" class="hover:text-blue-600 px-1">
-                                <i class="fa-solid fa-arrow-up"></i>
-                            </button>
-                            <button onclick="moveItem(${index}, 1)" ${index === appState.items.length - 1 ? 'disabled class="opacity-30"' : ''} title="ย้ายลง" class="hover:text-blue-600 px-1">
-                                <i class="fa-solid fa-arrow-down"></i>
-                            </button>
-                            <button onclick="openEditModal('${item.id}')" class="hover:text-blue-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded shadow-sm">
-                                <i class="fa-solid fa-pen"></i> แก้ไข
-                            </button>
-                            <button onclick="deleteDefectItem('${item.id}')" class="hover:text-red-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded text-red-600 shadow-sm">
-                                <i class="fa-solid fa-trash-can"></i> ลบ
-                            </button>
-                        </div>
+                  ${item.showClosingText !== false ? `
+                    <p class="mt-2 text-xs sm:text-sm text-slate-900 font-semibold">
+                      <u>พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง</u>
+                    </p>
+                  ` : ''}
+                </div>
+
+                <!-- Bottom Inspection & Area Zone -->
+                <div class="mt-4 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+                  
+                  <!-- Checkboxes with Pen Slash Effect -->
+                  <div class="flex items-center gap-6 font-bold text-slate-800">
+                    <div onclick="window.toggleDefectStatus('${item.id}', 'PASS')" class="flex items-center gap-2 cursor-pointer select-none group">
+                      <div class="pen-slash-box ${isPass ? 'checked' : ''}"></div>
+                      <span class="${isPass ? 'text-blue-700 font-bold' : ''}">PASS</span>
                     </div>
 
-                    <!-- Defect Content Row matching uploaded template -->
-                    <div class="flex flex-col md:flex-row w-full min-h-[220px]">
-                        <!-- Left Column: ITEM Photo -->
-                        <div class="w-full md:w-[40%] p-2.5 border-b md:border-b-0 md:border-r border-black flex flex-col items-center justify-center bg-white relative">
-                            <img src="${item.photo}" class="max-w-full max-h-[240px] w-auto h-auto object-contain rounded border border-slate-200">
-                        </div>
-
-                        <!-- Right Column: DESCRIPTION OF DEFECT AND COMMENT -->
-                        <div class="w-full md:w-[60%] p-3.5 flex flex-col justify-between bg-white leading-relaxed text-sm sm:text-base text-black">
-                            <!-- Comment Text -->
-                            <div class="space-y-2">
-                                <p class="text-base sm:text-lg font-normal text-slate-900 leading-snug">
-                                    ${escapeHtml(item.comment)}
-                                    ${item.appendNote ? `<span class="underline font-semibold ml-1">${STANDARD_NOTE}</span>` : ''}
-                                </p>
-                            </div>
-
-                            <!-- Bottom Status and Location Row -->
-                            <div class="mt-4 pt-3 border-t border-slate-200 flex items-end justify-between text-sm sm:text-base">
-                                
-                                <!-- Interactive PASS / NOT PASS Click Boxes -->
-                                <div class="flex items-center gap-6 font-bold tracking-wide">
-                                    <!-- PASS BOX -->
-                                    <div onclick="toggleStatus('${item.id}', 'pass')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ผ่าน">
-                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isPass ? 'active-pass' : ''} group-hover/btn:border-blue-600">
-                                        </div>
-                                        <span class="${isPass ? 'text-black font-extrabold' : 'text-slate-700'}">PASS</span>
-                                    </div>
-
-                                    <!-- NOT PASS BOX -->
-                                    <div onclick="toggleStatus('${item.id}', 'fail')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ไม่ผ่าน">
-                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isFail ? 'active-fail' : ''} group-hover/btn:border-red-600">
-                                        </div>
-                                        <span class="${isFail ? 'text-black font-extrabold' : 'text-slate-700'}">NOT PASS</span>
-                                    </div>
-                                </div>
-
-                                <!-- Location Zone Tag -->
-                                <div class="text-xs sm:text-sm font-semibold text-slate-800">
-                                    บริเวณ : <span class="font-normal underline">${item.location || 'งานทั่วไป'}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div onclick="window.toggleDefectStatus('${item.id}', 'NOT_PASS')" class="flex items-center gap-2 cursor-pointer select-none group">
+                      <div class="pen-slash-box ${isNotPass ? 'checked' : ''}"></div>
+                      <span class="${isNotPass ? 'text-rose-700 font-bold' : ''}">NOT PASS</span>
                     </div>
+                  </div>
 
-                    <!-- Grey Item Index Separator Bar -->
-                    <div class="bg-slate-200 border-t border-black px-2 py-0.5 text-xs font-bold text-black">
-                        ${itemIndex}
-                    </div>
-                `;
+                  <!-- Location Area Tag -->
+                  <div class="text-slate-600 font-medium text-xs">
+                    <span>บริเวณ :</span>
+                    <span class="font-semibold text-slate-800 border-b border-dotted border-slate-400 px-1" contenteditable="true" onblur="window.updateItemArea('${item.id}', this.innerText)">${item.area || 'งานทั่วไป'}</span>
+                  </div>
 
-                listContainer.appendChild(rowEl);
-            });
+                </div>
 
-            updateCounters();
+              </div>
+
+            </div>
+
+            <!-- Grey Separator Bar with Item Number -->
+            <div class="bg-slate-300 text-slate-800 font-prompt font-bold text-center text-xs py-1 uppercase tracking-wider border-t border-slate-300">
+              ${itemNumber}
+            </div>
+
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ==================== CRITICAL BUG FIX: ADD ITEM HANDLER ====================
+    // NON-BLOCKING & SYNCHRONOUS LOCAL UPDATE BEFORE ANY ASYNC FIREBASE OPERATONS
+    async function addItem() {
+      try {
+        const areaSelect = document.getElementById('input-area');
+        const commentTextarea = document.getElementById('input-comment');
+        const closingTextCheckbox = document.getElementById('input-closing-text');
+
+        const area = areaSelect ? areaSelect.value : 'งานทั่วไป';
+        let description = commentTextarea ? commentTextarea.value.trim() : '';
+        const showClosingText = closingTextCheckbox ? closingTextCheckbox.checked : true;
+
+        // Requirement 3: Flexible Form Validation
+        // If description is empty, set a friendly default so adding NEVER fails silently
+        if (!description) {
+          description = `ตรวจเช็คแก้ไขจุด defect ${area}`;
         }
 
-        // Live Metadata update
-        function updateMetadata() {
-            appState.project = document.getElementById('meta-project-input').value;
-            appState.no = document.getElementById('meta-no-input').value;
-            appState.houseNo = document.getElementById('meta-house-input').value;
-            appState.date = document.getElementById('meta-date-input').value;
-            appState.customerName = document.getElementById('meta-customer-input').value;
+        // Create new item object immediately
+        const newItem = {
+          id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          image: selectedImageDataUrl || '',
+          description: description,
+          area: area,
+          status: 'NONE',
+          showClosingText: showClosingText
+        };
 
-            document.getElementById('disp-project').innerText = appState.project || "-";
-            document.getElementById('disp-no').innerText = appState.no || "-";
-            document.getElementById('disp-house').innerText = appState.houseNo || "-";
-            document.getElementById('disp-date').innerText = appState.date || "-";
-            document.getElementById('disp-customer').innerText = appState.customerName || "-";
+        // 1. Update State synchronously
+        state.items.push(newItem);
 
-            saveData();
+        // 2. Re-render UI immediately
+        renderReport();
+
+        // 3. Save to localStorage immediately
+        saveLocalData();
+
+        // 4. Reset input form UI
+        if (commentTextarea) commentTextarea.value = '';
+        selectedImageDataUrl = null;
+        const uploadPreviewContainer = document.getElementById('upload-preview-container');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const imageInput = document.getElementById('image-input');
+        
+        if (uploadPreviewContainer) uploadPreviewContainer.classList.add('hidden');
+        if (uploadPlaceholder) uploadPlaceholder.classList.remove('hidden');
+        if (imageInput) imageInput.value = '';
+
+        // 5. Provide immediate feedback toast
+        showToast(`เพิ่มรายการที่ ${state.items.length} เรียบร้อยแล้ว`, 'success');
+
+        // Scroll to the new item smoothly
+        const reportPaper = document.getElementById('defect-items-list');
+        if (reportPaper && reportPaper.lastElementChild) {
+          reportPaper.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // Dashboard Stat Counters
-        function updateCounters() {
-            const total = appState.items.length;
-            const pass = appState.items.filter(i => i.status === 'pass').length;
-            const fail = appState.items.filter(i => i.status === 'fail').length;
-            const pending = total - (pass + fail);
+      } catch (error) {
+        console.error("Error in addItem:", error);
+        showToast("เกิดข้อผิดพลาดในการเพิ่มรายการ: " + error.message, 'error');
+      }
+    }
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-pass').innerText = pass;
-            document.getElementById('stat-fail').innerText = fail;
-            document.getElementById('stat-pending').innerText = pending;
+    // Item Status Toggler (PASS / NOT PASS)
+    function toggleDefectStatus(itemId, targetStatus) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (item.status === targetStatus) {
+        item.status = 'NONE';
+      } else {
+        item.status = targetStatus;
+      }
+
+      renderReport();
+      saveLocalData();
+    }
+
+    // Item Deletion
+    function deleteDefectItem(itemId) {
+      const index = state.items.findIndex(i => i.id === itemId);
+      if (index !== -1) {
+        state.items.splice(index, 1);
+        renderReport();
+        saveLocalData();
+        showToast('ลบรายการเรียบร้อยแล้ว', 'info');
+      }
+    }
+
+    // Editable text updaters
+    function updateItemDescription(itemId, newText) {
+      const item = state.items.find(i => i.id === itemId);
+      if (item) {
+        item.description = newText.trim();
+        saveLocalData();
+      }
+    }
+
+    function updateItemArea(itemId, newArea) {
+      const item = state.items.find(i => i.id === itemId);
+      if (item) {
+        item.area = newArea.trim();
+        saveLocalData();
+      }
+    }
+
+    // Photo Replacement Trigger
+    function triggerReplacePhoto(itemId) {
+      activeAnnotateItemId = itemId;
+      const fileInput = document.getElementById('row-file-replacer');
+      if (fileInput) {
+        fileInput.click();
+      }
+    }
+
+    // ==================== RED CIRCLE MARKUP ANNOTATION CANVAS ====================
+    function openMarkupModal(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item || !item.image) return;
+
+      activeAnnotateItemId = itemId;
+      const modal = document.getElementById('annotation-modal');
+      canvas = document.getElementById('annotation-canvas');
+      ctx = canvas.getContext('2d');
+
+      baseImage = new Image();
+      baseImage.onload = function() {
+        canvas.width = baseImage.width;
+        canvas.height = baseImage.height;
+        ctx.drawImage(baseImage, 0, 0);
+        drawHistory = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        modal.classList.remove('hidden');
+      };
+      baseImage.src = item.image;
+    }
+
+    function setupCanvasListeners() {
+      if (!canvas) return;
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        
+        if (e.touches && e.touches[0]) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
         }
 
-        // Status Toggle directly from preview table
-        function toggleStatus(id, targetStatus) {
-            const item = appState.items.find(i => i.id === id);
-            if (!item) return;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      };
 
-            // If clicking the same active status, reset to pending
-            if (item.status === targetStatus) {
-                item.status = 'pending';
-            } else {
-                item.status = targetStatus;
-            }
-
-            saveData();
-            renderApp();
+      const startDraw = (e) => {
+        isDrawing = true;
+        const pos = getPos(e);
+        startX = pos.x;
+        startY = pos.y;
+        
+        if (currentTool === 'freehand') {
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
         }
+      };
 
-        // Modal Operations
-        let currentPhotoBase64 = "";
+      const doDraw = (e) => {
+        if (!isDrawing) return;
+        const pos = getPos(e);
 
-        function openAddModal() {
-            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-plus-circle text-emerald-400"></i> เพิ่มรายการตรวจ Defect';
-            document.getElementById('edit-item-id').value = '';
-            document.getElementById('defect-form').reset();
-            currentPhotoBase64 = "";
+        if (currentTool === 'freehand') {
+          ctx.strokeStyle = '#e11d48';
+          ctx.lineWidth = Math.max(4, canvas.width / 150);
+          ctx.lineCap = 'round';
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        } else if (currentTool === 'circle' || currentTool === 'arrow') {
+          // Restore last snapshot for previewing shape during drag
+          if (drawHistory.length > 0) {
+            ctx.putImageData(drawHistory[drawHistory.length - 1], 0, 0);
+          }
 
-            document.getElementById('modal-photo-img').classList.add('hidden');
-            document.getElementById('modal-photo-placeholder').classList.remove('hidden');
-            document.getElementById('btn-open-draw').classList.add('hidden');
+          ctx.strokeStyle = '#e11d48';
+          ctx.lineWidth = Math.max(4, canvas.width / 120);
 
-            document.getElementById('item-modal').classList.remove('hidden');
-        }
-
-        function openEditModal(id) {
-            const item = appState.items.find(i => i.id === id);
-            if (!item) return;
-
-            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-400"></i> แก้ไขรายการ defect';
-            document.getElementById('edit-item-id').value = item.id;
-            document.getElementById('item-comment-input').value = item.comment;
-            document.getElementById('item-location-input').value = item.location || '';
-            document.getElementById('item-append-note-checkbox').checked = !!item.appendNote;
-
-            // Radio status
-            const radios = document.getElementsByName('item-status');
-            radios.forEach(r => r.checked = (r.value === (item.status || 'pending')));
-
-            currentPhotoBase64 = item.photo;
-            if (currentPhotoBase64) {
-                document.getElementById('modal-photo-img').src = currentPhotoBase64;
-                document.getElementById('modal-photo-img').classList.remove('hidden');
-                document.getElementById('modal-photo-placeholder').classList.add('hidden');
-                document.getElementById('btn-open-draw').classList.remove('hidden');
-            }
-
-            document.getElementById('item-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('item-modal').classList.add('hidden');
-        }
-
-        function setLocationPreset(text) {
-            document.getElementById('item-location-input').value = text;
-        }
-
-        function appendStandardPhrase() {
-            const txt = document.getElementById('item-comment-input');
-            if (!txt.value.includes(STANDARD_NOTE)) {
-                txt.value = txt.value.trim() ? `${txt.value.trim()} ${STANDARD_NOTE}` : STANDARD_NOTE;
-            }
-        }
-
-        // Handle Photo File Upload
-        function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                currentPhotoBase64 = e.target.result;
-                document.getElementById('modal-photo-img').src = currentPhotoBase64;
-                document.getElementById('modal-photo-img').classList.remove('hidden');
-                document.getElementById('modal-photo-placeholder').classList.add('hidden');
-                document.getElementById('btn-open-draw').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Save Form Item
-        function saveDefectItem(event) {
-            event.preventDefault();
-
-            if (!currentPhotoBase64) {
-                alert("กรุณาแนบรูปภาพจุดบกพร่องก่อนบันทึกรายการ");
-                return;
-            }
-
-            const editId = document.getElementById('edit-item-id').value;
-            const comment = document.getElementById('item-comment-input').value.trim();
-            const location = document.getElementById('item-location-input').value.trim() || 'งานหลังคา';
-            const appendNote = document.getElementById('item-append-note-checkbox').checked;
-            
-            let status = 'pending';
-            const radios = document.getElementsByName('item-status');
-            radios.forEach(r => { if (r.checked) status = r.value; });
-
-            if (editId) {
-                // Update existing
-                const index = appState.items.findIndex(i => i.id === editId);
-                if (index !== -1) {
-                    appState.items[index] = {
-                        ...appState.items[index],
-                        photo: currentPhotoBase64,
-                        comment,
-                        location,
-                        appendNote,
-                        status
-                    };
-                }
-            } else {
-                // Create new
-                const newItem = {
-                    id: 'def_' + Date.now(),
-                    photo: currentPhotoBase64,
-                    comment,
-                    location,
-                    appendNote,
-                    status
-                };
-                appState.items.push(newItem);
-            }
-
-            saveData();
-            renderApp();
-            closeModal();
-        }
-
-        function deleteDefectItem(id) {
-            if (confirm("คุณต้องการลบรายการตรวจนี้ใช่หรือไม่?")) {
-                appState.items = appState.items.filter(i => i.id !== id);
-                saveData();
-                renderApp();
-            }
-        }
-
-        function moveItem(index, direction) {
-            const targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= appState.items.length) return;
-
-            const temp = appState.items[index];
-            appState.items[index] = appState.items[targetIndex];
-            appState.items[targetIndex] = temp;
-
-            saveData();
-            renderApp();
-        }
-
-
-        // ================= DRAWING / MARKUP CANVAS LOGIC =================
-        let canvas, ctx;
-        let activeTool = 'circle'; // 'circle' or 'pen'
-        let isDrawing = false;
-        let startX = 0, startY = 0;
-        let originalImgObj = null;
-        let canvasHistory = [];
-
-        function openDrawModal() {
-            if (!currentPhotoBase64) return;
-
-            document.getElementById('draw-modal').classList.remove('hidden');
-            canvas = document.getElementById('markup-canvas');
-            ctx = canvas.getContext('2d');
-
-            originalImgObj = new Image();
-            originalImgObj.onload = function() {
-                // Set canvas size matching image proportions (max width 800)
-                let w = originalImgObj.width;
-                let h = originalImgObj.height;
-                const maxW = 800;
-                if (w > maxW) {
-                    h = Math.round((h * maxW) / w);
-                    w = maxW;
-                }
-                canvas.width = w;
-                canvas.height = h;
-
-                // Draw image on canvas
-                ctx.drawImage(originalImgObj, 0, 0, canvas.width, canvas.height);
-                saveCanvasState();
-            };
-            originalImgObj.src = currentPhotoBase64;
-        }
-
-        function closeDrawModal() {
-            document.getElementById('draw-modal').classList.add('hidden');
-        }
-
-        function setDrawTool(tool) {
-            activeTool = tool;
-            document.getElementById('tool-circle').className = tool === 'circle' ? 
-                'px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm' : 
-                'px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium';
-            document.getElementById('tool-pen').className = tool === 'pen' ? 
-                'px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm' : 
-                'px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium';
-        }
-
-        function saveCanvasState() {
-            if (canvasHistory.length > 5) canvasHistory.shift();
-            canvasHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-        }
-
-        function resetCanvasImage() {
-            if (originalImgObj && ctx) {
-                ctx.drawImage(originalImgObj, 0, 0, canvas.width, canvas.height);
-                canvasHistory = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
-            }
-        }
-
-        function setupCanvasEvents() {
-            const cvs = document.getElementById('markup-canvas');
-            if (!cvs) return;
-
-            const getPos = (e) => {
-                const rect = cvs.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const scaleX = cvs.width / rect.width;
-                const scaleY = cvs.height / rect.height;
-                return {
-                    x: (clientX - rect.left) * scaleX,
-                    y: (clientY - rect.top) * scaleY
-                };
-            };
-
-            const startDraw = (e) => {
-                isDrawing = true;
-                const pos = getPos(e);
-                startX = pos.x;
-                startY = pos.y;
-                if (activeTool === 'pen') {
-                    ctx.beginPath();
-                    ctx.moveTo(startX, startY);
-                }
-            };
-
-            const moveDraw = (e) => {
-                if (!isDrawing) return;
-                e.preventDefault();
-                const pos = getPos(e);
-
-                if (activeTool === 'pen') {
-                    ctx.strokeStyle = '#dc2626';
-                    ctx.lineWidth = 4;
-                    ctx.lineCap = 'round';
-                    ctx.lineTo(pos.x, pos.y);
-                    ctx.stroke();
-                } else if (activeTool === 'circle') {
-                    // Restore last state then draw temporary oval
-                    if (canvasHistory.length > 0) {
-                        ctx.putImageData(canvasHistory[canvasHistory.length - 1], 0, 0);
-                    }
-                    drawRedEllipse(startX, startY, pos.x, pos.y);
-                }
-            };
-
-            const stopDraw = () => {
-                if (!isDrawing) return;
-                isDrawing = false;
-                saveCanvasState();
-            };
-
-            cvs.addEventListener('mousedown', startDraw);
-            cvs.addEventListener('mousemove', moveDraw);
-            cvs.addEventListener('mouseup', stopDraw);
-
-            cvs.addEventListener('touchstart', startDraw);
-            cvs.addEventListener('touchmove', moveDraw);
-            cvs.addEventListener('touchend', stopDraw);
-        }
-
-        function drawRedEllipse(x1, y1, x2, y2) {
-            const radiusX = Math.abs(x2 - x1) / 2;
-            const radiusY = Math.abs(y2 - y1) / 2;
-            const centerX = Math.min(x1, x2) + radiusX;
-            const centerY = Math.min(y1, y2) + radiusY;
+          if (currentTool === 'circle') {
+            const rx = Math.abs(pos.x - startX) / 2;
+            const ry = Math.abs(pos.y - startY) / 2;
+            const cx = Math.min(startX, pos.x) + rx;
+            const cy = Math.min(startY, pos.y) + ry;
 
             ctx.beginPath();
-            ctx.ellipse(centerX, centerY, Math.max(radiusX, 10), Math.max(radiusY, 10), 0, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#dc2626';
-            ctx.lineWidth = 5;
+            ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
             ctx.stroke();
+          } else if (currentTool === 'arrow') {
+            // Draw Arrow line
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(pos.y - startY, pos.x - startX);
+            const headLen = Math.max(12, canvas.width / 40);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.lineTo(pos.x - headLen * Math.cos(angle - Math.PI / 6), pos.y - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(pos.x - headLen * Math.cos(angle + Math.PI / 6), pos.y - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.fillStyle = '#e11d48';
+            ctx.fill();
+          }
         }
+      };
 
-        function saveCanvasMarkup() {
-            if (!canvas) return;
-            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
-            document.getElementById('modal-photo-img').src = currentPhotoBase64;
-            closeDrawModal();
+      const stopDraw = () => {
+        if (isDrawing) {
+          isDrawing = false;
+          drawHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
         }
+      };
 
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', doDraw);
+      canvas.addEventListener('mouseup', stopDraw);
+      
+      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+      canvas.addEventListener('touchmove', (e) => { e.preventDefault(); doDraw(e); });
+      canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDraw(e); });
+    }
 
-        // ================= PDF EXPORT FUNCTIONALITY =================
-        function exportToPDF() {
-            const element = document.getElementById('report-document');
+    // PDF Export Functionality
+    function exportToPDF() {
+      const element = document.getElementById('report-paper');
+      if (!element) return;
 
-            const filename = `List_of_Defect_${appState.houseNo || 'ครั้งที่3'}_${new Date().toISOString().slice(0,10)}.pdf`;
+      showToast("กำลังเตรียมไฟล์ PDF...", "info");
 
-            const opt = {
-                margin:       [8, 8, 8, 8],
-                filename:     filename,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-            };
+      const opt = {
+        margin:       [5, 5, 5, 5],
+        filename:     `List_of_Defect_No3_162_307.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
 
-            // Temporary hide no-print inside PDF preview element if any
-            html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(element).save().then(() => {
+        showToast("ส่งออกไฟล์ PDF เรียบร้อยแล้ว", "success");
+      }).catch(err => {
+        console.error("PDF Export error:", err);
+        showToast("ไม่สามารถสร้าง PDF ได้ ให้ใช้ปุ่ม พิมพ์ (Print) แทน", "error");
+      });
+    }
+
+    // Print Handler
+    function handlePrint() {
+      window.print();
+    }
+
+    // ==================== BIND EXPLICIT WINDOW GLOBALS ====================
+    window.addItem = addItem;
+    window.toggleDefectStatus = toggleDefectStatus;
+    window.deleteDefectItem = deleteDefectItem;
+    window.updateItemDescription = updateItemDescription;
+    window.updateItemArea = updateItemArea;
+    window.triggerReplacePhoto = triggerReplacePhoto;
+    window.openMarkupModal = openMarkupModal;
+    window.exportToPDF = exportToPDF;
+
+    // ==================== INITIALIZATION & EVENT LISTENERS ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // Load initial local data
+      loadLocalData();
+      renderReport();
+
+      // Set default date input if not set
+      const dateInput = document.getElementById('meta-date');
+      if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+      }
+
+      // Explicitly attach Add Item Event Listener
+      const addBtn = document.getElementById('add-item-btn');
+      if (addBtn) {
+        addBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          addItem();
+        });
+      }
+
+      // Action bar buttons
+      document.getElementById('btn-save')?.addEventListener('click', () => {
+        saveLocalData();
+        showToast("บันทึกข้อมูลเรียบร้อยแล้ว", "success");
+      });
+
+      document.getElementById('btn-sync')?.addEventListener('click', () => {
+        loadLocalData();
+        renderReport();
+        showToast("ดึงข้อมูลล่าสุดเรียบร้อยแล้ว", "info");
+      });
+
+      document.getElementById('btn-export-pdf')?.addEventListener('click', exportToPDF);
+      document.getElementById('btn-print')?.addEventListener('click', handlePrint);
+
+      // Quick preset dropdown selector
+      document.getElementById('quick-preset')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        const textarea = document.getElementById('input-comment');
+        if (val && textarea) {
+          textarea.value = val;
         }
+      });
 
+      // Image Upload Handling
+      const imageInput = document.getElementById('image-input');
+      const uploadPreviewImg = document.getElementById('upload-preview-img');
+      const uploadPreviewContainer = document.getElementById('upload-preview-container');
+      const uploadPlaceholder = document.getElementById('upload-placeholder');
+      const btnRemovePreview = document.getElementById('btn-remove-preview');
 
-        // ================= JSON BACKUP / IMPORT =================
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `Defect_Backup_${appState.houseNo || 'round3'}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-        }
+      if (imageInput) {
+        imageInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
 
-        function triggerImportJSON() {
-            document.getElementById('json-file-input').click();
-        }
+          try {
+            showToast("กำลังประมวลผลรูปภาพ...", "info");
+            selectedImageDataUrl = await compressImageFile(file);
+            
+            if (uploadPreviewImg) uploadPreviewImg.src = selectedImageDataUrl;
+            if (uploadPreviewContainer) uploadPreviewContainer.classList.remove('hidden');
+            if (uploadPlaceholder) uploadPlaceholder.classList.add('hidden');
+            showToast("แนบรูปภาพเรียบร้อยแล้ว", "success");
+          } catch (err) {
+            console.error("Error processing image:", err);
+            showToast("ไม่สามารถประมวลผลรูปภาพได้", "error");
+          }
+        });
+      }
 
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+      if (btnRemovePreview) {
+        btnRemovePreview.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedImageDataUrl = null;
+          if (uploadPreviewContainer) uploadPreviewContainer.classList.add('hidden');
+          if (uploadPlaceholder) uploadPlaceholder.classList.remove('hidden');
+          if (imageInput) imageInput.value = '';
+        });
+      }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if (parsed && Array.isArray(parsed.items)) {
-                        appState = parsed;
-                        loadSavedData();
-                        renderApp();
-                        alert("นำเข้าข้อมูลเรียบร้อยแล้ว");
-                    } else {
-                        alert("รูปแบบไฟล์ JSON ไม่ถูกต้อง");
-                    }
-                } catch (err) {
-                    alert("ไม่สามารถอ่านไฟล์ JSON ได้");
-                }
-            };
-            reader.readAsText(file);
-        }
+      // Inline Row File Replacer
+      const rowFileReplacer = document.getElementById('row-file-replacer');
+      if (rowFileReplacer) {
+        rowFileReplacer.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file || !activeAnnotateItemId) return;
 
-        function confirmResetData() {
-            if (confirm("ต้องการรีเซ็ตกลับเป็นข้อมูลตัวอย่างตั้งต้นหรือไม่?")) {
-                appState.items = DEFAULT_ITEMS;
-                saveData();
-                renderApp();
+          try {
+            const compressedUrl = await compressImageFile(file);
+            const item = state.items.find(i => i.id === activeAnnotateItemId);
+            if (item) {
+              item.image = compressedUrl;
+              renderReport();
+              saveLocalData();
+              showToast("อัปเดตรูปภาพเรียบร้อยแล้ว", "success");
             }
+          } catch (err) {
+            console.error("Error replacing row photo:", err);
+          } finally {
+            rowFileReplacer.value = '';
+          }
+        });
+      }
+
+      // Setup Annotation Modal Controls
+      setupCanvasListeners();
+
+      document.getElementById('btn-close-annotation')?.addEventListener('click', () => {
+        document.getElementById('annotation-modal')?.classList.add('hidden');
+      });
+      document.getElementById('btn-cancel-annotation')?.addEventListener('click', () => {
+        document.getElementById('annotation-modal')?.classList.add('hidden');
+      });
+
+      document.getElementById('tool-circle')?.addEventListener('click', (e) => {
+        currentTool = 'circle';
+        document.querySelectorAll('#annotation-modal button[id^="tool-"]').forEach(b => b.classList.replace('bg-rose-600', 'bg-slate-700'));
+        e.currentTarget.classList.replace('bg-slate-700', 'bg-rose-600');
+      });
+
+      document.getElementById('tool-arrow')?.addEventListener('click', (e) => {
+        currentTool = 'arrow';
+        document.querySelectorAll('#annotation-modal button[id^="tool-"]').forEach(b => b.classList.replace('bg-rose-600', 'bg-slate-700'));
+        e.currentTarget.classList.replace('bg-slate-700', 'bg-rose-600');
+      });
+
+      document.getElementById('tool-freehand')?.addEventListener('click', (e) => {
+        currentTool = 'freehand';
+        document.querySelectorAll('#annotation-modal button[id^="tool-"]').forEach(b => b.classList.replace('bg-rose-600', 'bg-slate-700'));
+        e.currentTarget.classList.replace('bg-slate-700', 'bg-rose-600');
+      });
+
+      document.getElementById('btn-undo-draw')?.addEventListener('click', () => {
+        if (drawHistory.length > 1) {
+          drawHistory.pop();
+          ctx.putImageData(drawHistory[drawHistory.length - 1], 0, 0);
         }
+      });
 
-
-        // Helper Utilities
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/"/g, "&quot;")
-                      .replace(/'/g, "&#039;");
+      document.getElementById('btn-save-annotation')?.addEventListener('click', () => {
+        if (!canvas || !activeAnnotateItemId) return;
+        const editedUrl = canvas.toDataURL('image/jpeg', 0.7);
+        const item = state.items.find(i => i.id === activeAnnotateItemId);
+        if (item) {
+          item.image = editedUrl;
+          renderReport();
+          saveLocalData();
+          showToast("บันทึกวงกลมระบุจุดเสียเรียบร้อยแล้ว", "success");
         }
+        document.getElementById('annotation-modal')?.classList.add('hidden');
+      });
 
-        // SVG Mock generators matching sample roof defect image
-        function createMockRoofImageSvg(type) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 600;
-            canvas.height = 400;
-            const ctx = canvas.getContext('2d');
-
-            // Sky background
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(0, 0, 600, 400);
-
-            if (type === 'roof1') {
-                // Gable Roof Drawing
-                ctx.fillStyle = '#475569';
-                ctx.beginPath();
-                ctx.moveTo(100, 350);
-                ctx.lineTo(450, 100);
-                ctx.lineTo(550, 180);
-                ctx.lineTo(200, 400);
-                ctx.fill();
-
-                // House Wall
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(50, 200, 250, 180);
-                // Window
-                ctx.fillStyle = '#1e293b';
-                ctx.fillRect(200, 250, 60, 60);
-
-                // Roof Tile Lines
-                ctx.strokeStyle = '#334155';
-                ctx.lineWidth = 3;
-                for(let i=0; i<8; i++){
-                    ctx.beginPath();
-                    ctx.moveTo(120 + i*40, 330 - i*25);
-                    ctx.lineTo(220 + i*40, 390 - i*25);
-                    ctx.stroke();
-                }
-
-                // Red Circle Markup for Defect
-                ctx.beginPath();
-                ctx.ellipse(450, 150, 30, 22, -0.2, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#dc2626';
-                ctx.lineWidth = 6;
-                ctx.stroke();
-
-            } else {
-                // Close-up Roof Tile Drawing
-                ctx.fillStyle = '#64748b';
-                ctx.fillRect(0, 0, 600, 400);
-
-                // Horizontal Tiles
-                ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 4;
-                for (let y = 50; y < 400; y += 60) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(600, y);
-                    ctx.stroke();
-
-                    // Tile wave lines
-                    for(let x=20; x<600; x+=80) {
-                        ctx.beginPath();
-                        ctx.arc(x, y, 15, 0, Math.PI);
-                        ctx.stroke();
-                    }
-                }
-
-                // Red Circle around misaligned tile
-                ctx.beginPath();
-                ctx.ellipse(240, 220, 50, 25, 0, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#dc2626';
-                ctx.lineWidth = 7;
-                ctx.stroke();
-            }
-
-            return canvas.toDataURL('image/jpeg', 0.9);
-        }
-    </script>
+    });
+  </script>
 </body>
 </html>
