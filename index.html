@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แอพตรวจบ้าน ครั้งที่ 3 - List of Defect</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- html2pdf.js for clean PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        reportHeader: '#365f91',
+                        reportBorder: '#000000',
+                    },
+                    fontFamily: {
+                        sarabun: ['Sarabun', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        /* Printable PDF Sheet Styling */
+        .pdf-page-container {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Report Table Borders matching uploaded document */
+        .defect-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 2px solid #000000;
+        }
+
+        .defect-table th, 
+        .defect-table td {
+            border: 1.5px solid #000000;
+        }
+
+        /* Blue pen slash mark for PASS/NOT PASS checkboxes */
+        .check-slash-mark {
+            position: relative;
+        }
+        .check-slash-mark.active-pass::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: -8px;
+            width: 48px;
+            height: 38px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80'%3E%3Cpath d='M10 50 L40 75 L95 10' fill='none' stroke='%200028e' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center center;
+            background-size: contain;
+            pointer-events: none;
+        }
+        .check-slash-mark.active-fail::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -6px;
+            width: 40px;
+            height: 36px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath d='M15 15 L65 65 M65 15 L15 65' fill='none' stroke='%23dc2626' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center center;
+            background-size: contain;
+            pointer-events: none;
+        }
+
+        /* Prevent breaking item blocks inside PDF pages */
+        .defect-item-row {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        /* Print Media Overrides */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .pdf-page-container {
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .defect-table {
+                border: 2px solid #000 !important;
+            }
+            .defect-table th, .defect-table td {
+                border: 1.5px solid #000 !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Top Action Toolbar (Hidden during PDF export / print) -->
+    <header class="no-print bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">
+                    <i class="fa-solid fa-clipboard-check text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">แอพตรวจบ้าน ครั้งที่ 3 - List of Defect</h1>
+                    <p class="text-xs text-slate-400">ระบบบันทึกรายการแก้ไขบ้าน / ติดตามงานย้อนกลับ</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Counters -->
+            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg text-xs">
+                <span class="text-slate-300">รวม <strong id="stat-total" class="text-white text-sm">0</strong></span>
+                <span class="border-r border-slate-600 h-4 mx-1"></span>
+                <span class="text-emerald-400"><i class="fa-solid fa-check"></i> ผ่าน <strong id="stat-pass" class="text-white text-sm">0</strong></span>
+                <span class="border-r border-slate-600 h-4 mx-1"></span>
+                <span class="text-red-400"><i class="fa-solid fa-xmark"></i> ไม่ผ่าน <strong id="stat-fail" class="text-white text-sm">0</strong></span>
+                <span class="border-r border-slate-600 h-4 mx-1"></span>
+                <span class="text-amber-400"><i class="fa-regular fa-clock"></i> รอตรวจ <strong id="stat-pending" class="text-white text-sm">0</strong></span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center flex-wrap gap-2">
+                <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-plus"></i> เพิ่มรายการ
+                </button>
+
+                <button onclick="exportToPDF()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-file-pdf"></i> Export PDF
+                </button>
+
+                <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> พิมพ์ / Print
+                </button>
+
+                <div class="relative group">
+                    <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-700">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div class="hidden group-hover:block absolute right-0 top-full mt-1 w-48 bg-white text-slate-800 rounded-lg shadow-xl border border-slate-200 py-1 text-sm z-50">
+                        <button onclick="exportJSON()" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-download text-slate-500"></i> สำรองข้อมูล (JSON)
+                        </button>
+                        <button onclick="triggerImportJSON()" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-upload text-slate-500"></i> นำเข้าข้อมูล (JSON)
+                        </button>
+                        <input type="file" id="json-file-input" accept=".json" class="hidden" onchange="importJSON(event)">
+                        <hr class="my-1">
+                        <button onclick="confirmResetData()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2">
+                            <i class="fa-solid fa-trash-can"></i> รีเซ็ตข้อมูลตัวอย่าง
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto p-4 sm:p-6">
+
+        <!-- Info Control Box (Form for editing metadata easily) -->
+        <div class="no-print bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
+                    <i class="fa-solid fa-sliders text-blue-600"></i> ข้อมูลโครงการและหัวข้อรายงาน
+                </h3>
+                <span class="text-xs text-slate-500">แก้ไขข้อมูลด้านล่างจะอัพเดทตารางรายงานทันที</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Project (ชื่อโครงการ)</label>
+                    <input type="text" id="meta-project-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">No (การตรวจครั้งที่)</label>
+                    <input type="text" id="meta-no-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">บ้านเลขที่</label>
+                    <input type="text" id="meta-house-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น 99/123">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Date (วันที่)</label>
+                    <input type="text" id="meta-date-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Customer Name</label>
+                    <input type="text" id="meta-customer-input" oninput="updateMetadata()" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PREVIEW / EXPORT CONTAINER ================= -->
+        <div id="report-document" class="pdf-page-container p-4 sm:p-6 text-black">
+            
+            <!-- Table Header matching reference image -->
+            <table class="defect-table mb-0">
+                <thead>
+                    <!-- Main Header Banner Row -->
+                    <tr class="bg-reportHeader text-white text-center">
+                        <th colspan="2" class="py-2.5 px-4 text-2xl sm:text-3xl font-bold tracking-wide underline underline-offset-4 decoration-2" style="background-color: #365f91; color: white;">
+                            List of Defect
+                        </th>
+                    </tr>
+                    <!-- Project Details Metadata Row -->
+                    <tr class="bg-white text-xs sm:text-sm font-normal text-black">
+                        <td class="p-2 w-1/2 align-top leading-relaxed border-r border-black">
+                            <div class="flex items-center gap-1">
+                                <span class="font-bold whitespace-nowrap">Project :</span>
+                                <span id="disp-project" class="font-medium">เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="font-bold whitespace-nowrap">Date :</span>
+                                <span id="disp-date" class="font-medium">18-10-2569</span>
+                            </div>
+                        </td>
+                        <td class="p-2 w-1/2 align-top leading-relaxed">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold">No :</span>
+                                    <span id="disp-no" class="font-medium ml-1">ครั้งที่ 3</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold">บ้านเลขที่ :</span>
+                                    <span id="disp-house" class="font-medium ml-1">-</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="font-bold whitespace-nowrap">Customer Name :</span>
+                                <span id="disp-customer" class="font-medium">k.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Column Headers -->
+                    <tr class="bg-reportHeader text-white text-center text-sm sm:text-base font-bold" style="background-color: #365f91; color: white;">
+                        <td class="py-2 px-2 w-[40%] border-r border-black underline">
+                            ITEM
+                        </td>
+                        <td class="py-2 px-2 w-[60%] underline">
+                            DESCRIPTION OF DEFECT AND COMMENT
+                        </td>
+                    </tr>
+                </thead>
+            </table>
+
+            <!-- Defect List Items Container -->
+            <div id="defect-items-list" class="flex flex-col border-b-2 border-l-2 border-r-2 border-black">
+                <!-- Dynamic Items Inserted Here -->
+            </div>
+
+        </div>
+        <!-- End Report Container -->
+
+    </main>
+
+    <!-- Modal 1: Add / Edit Item Modal -->
+    <div id="item-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-8 border border-slate-200 overflow-hidden">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <h3 id="modal-title" class="font-bold text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-blue-400"></i> เพิ่มรายการตรวจ Defect
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="defect-form" onsubmit="saveDefectItem(event)" class="p-6 space-y-4">
+                <input type="hidden" id="edit-item-id" value="">
+
+                <!-- Image Upload & Preview -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">
+                        รูปภาพจุดบกพร่อง (Defect Photo) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <div id="modal-photo-preview-box" class="w-full sm:w-48 h-36 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden group">
+                            <img id="modal-photo-img" src="" class="hidden w-full h-full object-cover">
+                            <div id="modal-photo-placeholder" class="text-center p-2 text-slate-400">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl mb-1 text-slate-300"></i>
+                                <p class="text-xs">เลือกหรือแนบรูปภาพ</p>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 space-y-2 w-full">
+                            <input type="file" id="photo-file-input" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="document.getElementById('photo-file-input').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition border border-slate-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-image text-blue-600"></i> เลือกรูปจากเครื่อง
+                                </button>
+                                <button type="button" id="btn-open-draw" onclick="openDrawModal()" class="hidden bg-red-50 hover:bg-red-100 text-red-600 text-xs px-3 py-2 rounded-lg font-medium transition border border-red-200 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-dot"></i> วาดวงกลมสีแดงชี้จุด
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-500 leading-tight">
+                                ข้อแนะนำ: เมื่อเลือกรูปแล้ว สามารถกดปุ่ม <span class="font-semibold text-red-600">"วาดวงกลมสีแดงชี้จุด"</span> เพื่อทำเครื่องหมายเน้นจุดชำรุดได้
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location / Zone Selection -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">
+                        บริเวณ (Zone / Area)
+                    </label>
+                    <input type="text" id="item-location-input" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น งานหลังคา, ห้องนอนใหญ่, งานสี">
+                    <!-- Preset Location Quick Buttons -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <span class="text-xs text-slate-400 self-center">ปุ่มลัด:</span>
+                        <button type="button" onclick="setLocationPreset('งานหลังคา')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานหลังคา</button>
+                        <button type="button" onclick="setLocationPreset('งานสี')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานสี</button>
+                        <button type="button" onclick="setLocationPreset('งานพื้น')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานพื้น</button>
+                        <button type="button" onclick="setLocationPreset('งานระบบไฟ')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานระบบไฟ</button>
+                        <button type="button" onclick="setLocationPreset('งานสุขาภิบาล')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานสุขาภิบาล</button>
+                        <button type="button" onclick="setLocationPreset('งานประตู-หน้าต่าง')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-700">งานประตู-หน้าต่าง</button>
+                    </div>
+                </div>
+
+                <!-- Description & Comments -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-bold text-slate-700">
+                            ข้อความอธิบายความบกพร่อง (Comment) <span class="text-red-500">*</span>
+                        </label>
+                        <button type="button" onclick="appendStandardPhrase()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded font-medium border border-blue-200 transition">
+                            <i class="fa-solid fa-plus-circle"></i> + ข้อความติดตามมาตรฐาน
+                        </button>
+                    </div>
+                    <textarea id="item-comment-input" rows="3" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed" placeholder="ระบุรายละเอียด defect..." required></textarea>
+                </div>
+
+                <!-- Underline standard note checkbox toggle -->
+                <div class="flex items-center gap-2 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                    <input type="checkbox" id="item-append-note-checkbox" checked class="w-4 h-4 text-blue-600 rounded">
+                    <label for="item-append-note-checkbox" class="text-xs text-amber-900 font-medium">
+                        ต่อด้วยประโยคเน้นย้ำ: <span class="underline font-bold">"พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง"</span>
+                    </label>
+                </div>
+
+                <!-- Inspection Status (Re-inspection status) -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">
+                        ผลการตรวจซ้ำ (Status)
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
+                            <input type="radio" name="item-status" value="pending" checked class="text-amber-500 focus:ring-amber-400">
+                            <span class="text-amber-600"><i class="fa-regular fa-clock"></i> รอตรวจ</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
+                            <input type="radio" name="item-status" value="pass" class="text-blue-600 focus:ring-blue-500">
+                            <span class="text-blue-700"><i class="fa-solid fa-check-double"></i> PASS (ผ่าน)</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-2 p-2.5 border rounded-lg cursor-pointer transition hover:bg-slate-50 text-xs sm:text-sm font-semibold">
+                            <input type="radio" name="item-status" value="fail" class="text-red-600 focus:ring-red-500">
+                            <span class="text-red-600"><i class="fa-solid fa-xmark"></i> NOT PASS</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-100">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกรายการ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Photo Markup / Red Circle Drawing Canvas -->
+    <div id="draw-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 text-white px-5 py-3 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-circle-notch text-red-500"></i> วาดวงกลมสีแดงชี้จุด defect
+                </h3>
+                <button onclick="closeDrawModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Canvas Workspace -->
+            <div class="p-4 bg-slate-800 flex-1 flex items-center justify-center overflow-auto min-h-[300px]">
+                <canvas id="markup-canvas" class="border-2 border-slate-600 rounded bg-black cursor-crosshair max-w-full max-h-[60vh] object-contain shadow-lg"></canvas>
+            </div>
+
+            <!-- Drawing Controls -->
+            <div class="p-4 bg-slate-100 border-t flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-700">โหมด:</span>
+                    <button type="button" id="tool-circle" onclick="setDrawTool('circle')" class="px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm">
+                        <i class="fa-regular fa-circle"></i> วาดวงกลม
+                    </button>
+                    <button type="button" id="tool-pen" onclick="setDrawTool('pen')" class="px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium">
+                        <i class="fa-solid fa-pen"></i> ปากกาวาดอิสระ
+                    </button>
+                    <button type="button" onclick="resetCanvasImage()" class="px-3 py-1.5 rounded bg-amber-100 text-amber-800 font-medium hover:bg-amber-200">
+                        <i class="fa-solid fa-rotate-left"></i> ล้างรอยวาด
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeDrawModal()" class="px-4 py-1.5 border border-slate-300 rounded bg-white text-slate-700">
+                        ยกเลิก
+                    </button>
+                    <button type="button" onclick="saveCanvasMarkup()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium shadow">
+                        <i class="fa-solid fa-check"></i> นำรูปนี้ไปใช้งาน
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+    <script>
+        // Data Structure & State Management
+        let appState = {
+            project: "เดอะแพลนท์ นิวทาวน์ บางนา-เทพารักษ์",
+            no: "ครั้งที่ 3",
+            houseNo: "123/45",
+            date: "18-10-2569",
+            customerName: "k. สมชาย",
+            items: []
+        };
+
+        // Standard Default Phrase
+        const STANDARD_NOTE = "พร้อมเก็บภาพถ่ายการแก้ไข ก่อน-หลัง เพื่อตรวจเช็คอีกครั้ง";
+
+        // Preloaded Initial Mock Data matching the user's reference image
+        const DEFAULT_ITEMS = [
+            {
+                id: "def_1",
+                photo: createMockRoofImageSvg("roof1"),
+                comment: "พบแผ่นครอบหน้าหลังคา เสมือนยิงสกรูไม่ครบ ตรวจสอบการติดตั้ง แก้ไขยิงสกรูให้ครบ",
+                appendNote: true,
+                location: "งานหลังคา",
+                status: "pass" // 'pass', 'fail', 'pending'
+            },
+            {
+                id: "def_2",
+                photo: createMockRoofImageSvg("roof2"),
+                comment: "พบแผ่นกระเบื้องหลังคาติดตั้งไม่แนบสนิท ตรวจสอบแก้ไขติดตั้งเก็บงานให้เรียบร้อยทั้งหมด",
+                appendNote: true,
+                location: "งานหลังคา",
+                status: "pass"
+            }
+        ];
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+            renderApp();
+            setupCanvasEvents();
+        });
+
+        // Save & Load LocalStorage
+        function saveData() {
+            localStorage.setItem('home_defect_report_v3', JSON.stringify(appState));
+            updateCounters();
+        }
+
+        function loadSavedData() {
+            const saved = localStorage.getItem('home_defect_report_v3');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Error parsing saved state", e);
+                    appState.items = DEFAULT_ITEMS;
+                }
+            } else {
+                appState.items = DEFAULT_ITEMS;
+            }
+
+            // Set Form metadata inputs
+            document.getElementById('meta-project-input').value = appState.project || "";
+            document.getElementById('meta-no-input').value = appState.no || "";
+            document.getElementById('meta-house-input').value = appState.houseNo || "";
+            document.getElementById('meta-date-input').value = appState.date || "";
+            document.getElementById('meta-customer-input').value = appState.customerName || "";
+        }
+
+        // Render Report Document
+        function renderApp() {
+            // Render Metadata Header
+            document.getElementById('disp-project').innerText = appState.project || "-";
+            document.getElementById('disp-no').innerText = appState.no || "-";
+            document.getElementById('disp-house').innerText = appState.houseNo || "-";
+            document.getElementById('disp-date').innerText = appState.date || "-";
+            document.getElementById('disp-customer').innerText = appState.customerName || "-";
+
+            // Render Items Table List
+            const listContainer = document.getElementById('defect-items-list');
+            listContainer.innerHTML = '';
+
+            if (appState.items.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-8 text-center text-slate-400 no-print">
+                        <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                        <p>ยังไม่มีรายการ defect - กดปุ่ม "+ เพิ่มรายการ" ด้านบนเพื่อเริ่มบันทึก</p>
+                    </div>
+                `;
+                updateCounters();
+                return;
+            }
+
+            appState.items.forEach((item, index) => {
+                const itemIndex = index + 1;
+                const isPass = item.status === 'pass';
+                const isFail = item.status === 'fail';
+
+                const rowEl = document.createElement('div');
+                rowEl.className = 'defect-item-row flex flex-col border-b border-black last:border-b-0 bg-white relative group';
+
+                rowEl.innerHTML = `
+                    <!-- Action Bar (Hidden in PDF/Print) -->
+                    <div class="no-print bg-slate-100 border-b border-slate-300 px-3 py-1 flex items-center justify-between text-xs text-slate-600">
+                        <div class="font-bold text-slate-800 flex items-center gap-2">
+                            <span>รายการที่ #${itemIndex}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded font-normal ${item.status==='pass'?'bg-emerald-100 text-emerald-800':item.status==='fail'?'bg-red-100 text-red-800':'bg-amber-100 text-amber-800'}">
+                                ${item.status==='pass'?'ผ่าน (PASS)':item.status==='fail'?'ไม่ผ่าน (NOT PASS)':'รอตรวจ'}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30"' : ''} title="ย้ายขึ้น" class="hover:text-blue-600 px-1">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <button onclick="moveItem(${index}, 1)" ${index === appState.items.length - 1 ? 'disabled class="opacity-30"' : ''} title="ย้ายลง" class="hover:text-blue-600 px-1">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </button>
+                            <button onclick="openEditModal('${item.id}')" class="hover:text-blue-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded shadow-sm">
+                                <i class="fa-solid fa-pen"></i> แก้ไข
+                            </button>
+                            <button onclick="deleteDefectItem('${item.id}')" class="hover:text-red-600 font-medium px-2 py-0.5 bg-white border border-slate-300 rounded text-red-600 shadow-sm">
+                                <i class="fa-solid fa-trash-can"></i> ลบ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Defect Content Row matching uploaded template -->
+                    <div class="flex flex-col md:flex-row w-full min-h-[220px]">
+                        <!-- Left Column: ITEM Photo -->
+                        <div class="w-full md:w-[40%] p-2.5 border-b md:border-b-0 md:border-r border-black flex flex-col items-center justify-center bg-white relative">
+                            <img src="${item.photo}" class="max-w-full max-h-[240px] w-auto h-auto object-contain rounded border border-slate-200">
+                        </div>
+
+                        <!-- Right Column: DESCRIPTION OF DEFECT AND COMMENT -->
+                        <div class="w-full md:w-[60%] p-3.5 flex flex-col justify-between bg-white leading-relaxed text-sm sm:text-base text-black">
+                            <!-- Comment Text -->
+                            <div class="space-y-2">
+                                <p class="text-base sm:text-lg font-normal text-slate-900 leading-snug">
+                                    ${escapeHtml(item.comment)}
+                                    ${item.appendNote ? `<span class="underline font-semibold ml-1">${STANDARD_NOTE}</span>` : ''}
+                                </p>
+                            </div>
+
+                            <!-- Bottom Status and Location Row -->
+                            <div class="mt-4 pt-3 border-t border-slate-200 flex items-end justify-between text-sm sm:text-base">
+                                
+                                <!-- Interactive PASS / NOT PASS Click Boxes -->
+                                <div class="flex items-center gap-6 font-bold tracking-wide">
+                                    <!-- PASS BOX -->
+                                    <div onclick="toggleStatus('${item.id}', 'pass')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ผ่าน">
+                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isPass ? 'active-pass' : ''} group-hover/btn:border-blue-600">
+                                        </div>
+                                        <span class="${isPass ? 'text-black font-extrabold' : 'text-slate-700'}">PASS</span>
+                                    </div>
+
+                                    <!-- NOT PASS BOX -->
+                                    <div onclick="toggleStatus('${item.id}', 'fail')" class="flex items-center gap-2 cursor-pointer select-none group/btn" title="คลิกเพื่อปรับสถานะ ไม่ผ่าน">
+                                        <div class="w-6 h-6 border-2 border-black flex items-center justify-center check-slash-mark ${isFail ? 'active-fail' : ''} group-hover/btn:border-red-600">
+                                        </div>
+                                        <span class="${isFail ? 'text-black font-extrabold' : 'text-slate-700'}">NOT PASS</span>
+                                    </div>
+                                </div>
+
+                                <!-- Location Zone Tag -->
+                                <div class="text-xs sm:text-sm font-semibold text-slate-800">
+                                    บริเวณ : <span class="font-normal underline">${item.location || 'งานทั่วไป'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grey Item Index Separator Bar -->
+                    <div class="bg-slate-200 border-t border-black px-2 py-0.5 text-xs font-bold text-black">
+                        ${itemIndex}
+                    </div>
+                `;
+
+                listContainer.appendChild(rowEl);
+            });
+
+            updateCounters();
+        }
+
+        // Live Metadata update
+        function updateMetadata() {
+            appState.project = document.getElementById('meta-project-input').value;
+            appState.no = document.getElementById('meta-no-input').value;
+            appState.houseNo = document.getElementById('meta-house-input').value;
+            appState.date = document.getElementById('meta-date-input').value;
+            appState.customerName = document.getElementById('meta-customer-input').value;
+
+            document.getElementById('disp-project').innerText = appState.project || "-";
+            document.getElementById('disp-no').innerText = appState.no || "-";
+            document.getElementById('disp-house').innerText = appState.houseNo || "-";
+            document.getElementById('disp-date').innerText = appState.date || "-";
+            document.getElementById('disp-customer').innerText = appState.customerName || "-";
+
+            saveData();
+        }
+
+        // Dashboard Stat Counters
+        function updateCounters() {
+            const total = appState.items.length;
+            const pass = appState.items.filter(i => i.status === 'pass').length;
+            const fail = appState.items.filter(i => i.status === 'fail').length;
+            const pending = total - (pass + fail);
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-pass').innerText = pass;
+            document.getElementById('stat-fail').innerText = fail;
+            document.getElementById('stat-pending').innerText = pending;
+        }
+
+        // Status Toggle directly from preview table
+        function toggleStatus(id, targetStatus) {
+            const item = appState.items.find(i => i.id === id);
+            if (!item) return;
+
+            // If clicking the same active status, reset to pending
+            if (item.status === targetStatus) {
+                item.status = 'pending';
+            } else {
+                item.status = targetStatus;
+            }
+
+            saveData();
+            renderApp();
+        }
+
+        // Modal Operations
+        let currentPhotoBase64 = "";
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-plus-circle text-emerald-400"></i> เพิ่มรายการตรวจ Defect';
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('defect-form').reset();
+            currentPhotoBase64 = "";
+
+            document.getElementById('modal-photo-img').classList.add('hidden');
+            document.getElementById('modal-photo-placeholder').classList.remove('hidden');
+            document.getElementById('btn-open-draw').classList.add('hidden');
+
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const item = appState.items.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-blue-400"></i> แก้ไขรายการ defect';
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('item-comment-input').value = item.comment;
+            document.getElementById('item-location-input').value = item.location || '';
+            document.getElementById('item-append-note-checkbox').checked = !!item.appendNote;
+
+            // Radio status
+            const radios = document.getElementsByName('item-status');
+            radios.forEach(r => r.checked = (r.value === (item.status || 'pending')));
+
+            currentPhotoBase64 = item.photo;
+            if (currentPhotoBase64) {
+                document.getElementById('modal-photo-img').src = currentPhotoBase64;
+                document.getElementById('modal-photo-img').classList.remove('hidden');
+                document.getElementById('modal-photo-placeholder').classList.add('hidden');
+                document.getElementById('btn-open-draw').classList.remove('hidden');
+            }
+
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        function setLocationPreset(text) {
+            document.getElementById('item-location-input').value = text;
+        }
+
+        function appendStandardPhrase() {
+            const txt = document.getElementById('item-comment-input');
+            if (!txt.value.includes(STANDARD_NOTE)) {
+                txt.value = txt.value.trim() ? `${txt.value.trim()} ${STANDARD_NOTE}` : STANDARD_NOTE;
+            }
+        }
+
+        // Handle Photo File Upload
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPhotoBase64 = e.target.result;
+                document.getElementById('modal-photo-img').src = currentPhotoBase64;
+                document.getElementById('modal-photo-img').classList.remove('hidden');
+                document.getElementById('modal-photo-placeholder').classList.add('hidden');
+                document.getElementById('btn-open-draw').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Save Form Item
+        function saveDefectItem(event) {
+            event.preventDefault();
+
+            if (!currentPhotoBase64) {
+                alert("กรุณาแนบรูปภาพจุดบกพร่องก่อนบันทึกรายการ");
+                return;
+            }
+
+            const editId = document.getElementById('edit-item-id').value;
+            const comment = document.getElementById('item-comment-input').value.trim();
+            const location = document.getElementById('item-location-input').value.trim() || 'งานหลังคา';
+            const appendNote = document.getElementById('item-append-note-checkbox').checked;
+            
+            let status = 'pending';
+            const radios = document.getElementsByName('item-status');
+            radios.forEach(r => { if (r.checked) status = r.value; });
+
+            if (editId) {
+                // Update existing
+                const index = appState.items.findIndex(i => i.id === editId);
+                if (index !== -1) {
+                    appState.items[index] = {
+                        ...appState.items[index],
+                        photo: currentPhotoBase64,
+                        comment,
+                        location,
+                        appendNote,
+                        status
+                    };
+                }
+            } else {
+                // Create new
+                const newItem = {
+                    id: 'def_' + Date.now(),
+                    photo: currentPhotoBase64,
+                    comment,
+                    location,
+                    appendNote,
+                    status
+                };
+                appState.items.push(newItem);
+            }
+
+            saveData();
+            renderApp();
+            closeModal();
+        }
+
+        function deleteDefectItem(id) {
+            if (confirm("คุณต้องการลบรายการตรวจนี้ใช่หรือไม่?")) {
+                appState.items = appState.items.filter(i => i.id !== id);
+                saveData();
+                renderApp();
+            }
+        }
+
+        function moveItem(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= appState.items.length) return;
+
+            const temp = appState.items[index];
+            appState.items[index] = appState.items[targetIndex];
+            appState.items[targetIndex] = temp;
+
+            saveData();
+            renderApp();
+        }
+
+
+        // ================= DRAWING / MARKUP CANVAS LOGIC =================
+        let canvas, ctx;
+        let activeTool = 'circle'; // 'circle' or 'pen'
+        let isDrawing = false;
+        let startX = 0, startY = 0;
+        let originalImgObj = null;
+        let canvasHistory = [];
+
+        function openDrawModal() {
+            if (!currentPhotoBase64) return;
+
+            document.getElementById('draw-modal').classList.remove('hidden');
+            canvas = document.getElementById('markup-canvas');
+            ctx = canvas.getContext('2d');
+
+            originalImgObj = new Image();
+            originalImgObj.onload = function() {
+                // Set canvas size matching image proportions (max width 800)
+                let w = originalImgObj.width;
+                let h = originalImgObj.height;
+                const maxW = 800;
+                if (w > maxW) {
+                    h = Math.round((h * maxW) / w);
+                    w = maxW;
+                }
+                canvas.width = w;
+                canvas.height = h;
+
+                // Draw image on canvas
+                ctx.drawImage(originalImgObj, 0, 0, canvas.width, canvas.height);
+                saveCanvasState();
+            };
+            originalImgObj.src = currentPhotoBase64;
+        }
+
+        function closeDrawModal() {
+            document.getElementById('draw-modal').classList.add('hidden');
+        }
+
+        function setDrawTool(tool) {
+            activeTool = tool;
+            document.getElementById('tool-circle').className = tool === 'circle' ? 
+                'px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm' : 
+                'px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium';
+            document.getElementById('tool-pen').className = tool === 'pen' ? 
+                'px-3 py-1.5 rounded bg-red-600 text-white font-medium shadow-sm' : 
+                'px-3 py-1.5 rounded bg-slate-200 text-slate-700 font-medium';
+        }
+
+        function saveCanvasState() {
+            if (canvasHistory.length > 5) canvasHistory.shift();
+            canvasHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        }
+
+        function resetCanvasImage() {
+            if (originalImgObj && ctx) {
+                ctx.drawImage(originalImgObj, 0, 0, canvas.width, canvas.height);
+                canvasHistory = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+            }
+        }
+
+        function setupCanvasEvents() {
+            const cvs = document.getElementById('markup-canvas');
+            if (!cvs) return;
+
+            const getPos = (e) => {
+                const rect = cvs.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const scaleX = cvs.width / rect.width;
+                const scaleY = cvs.height / rect.height;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            };
+
+            const startDraw = (e) => {
+                isDrawing = true;
+                const pos = getPos(e);
+                startX = pos.x;
+                startY = pos.y;
+                if (activeTool === 'pen') {
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                }
+            };
+
+            const moveDraw = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault();
+                const pos = getPos(e);
+
+                if (activeTool === 'pen') {
+                    ctx.strokeStyle = '#dc2626';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                } else if (activeTool === 'circle') {
+                    // Restore last state then draw temporary oval
+                    if (canvasHistory.length > 0) {
+                        ctx.putImageData(canvasHistory[canvasHistory.length - 1], 0, 0);
+                    }
+                    drawRedEllipse(startX, startY, pos.x, pos.y);
+                }
+            };
+
+            const stopDraw = () => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                saveCanvasState();
+            };
+
+            cvs.addEventListener('mousedown', startDraw);
+            cvs.addEventListener('mousemove', moveDraw);
+            cvs.addEventListener('mouseup', stopDraw);
+
+            cvs.addEventListener('touchstart', startDraw);
+            cvs.addEventListener('touchmove', moveDraw);
+            cvs.addEventListener('touchend', stopDraw);
+        }
+
+        function drawRedEllipse(x1, y1, x2, y2) {
+            const radiusX = Math.abs(x2 - x1) / 2;
+            const radiusY = Math.abs(y2 - y1) / 2;
+            const centerX = Math.min(x1, x2) + radiusX;
+            const centerY = Math.min(y1, y2) + radiusY;
+
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, Math.max(radiusX, 10), Math.max(radiusY, 10), 0, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+        }
+
+        function saveCanvasMarkup() {
+            if (!canvas) return;
+            currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('modal-photo-img').src = currentPhotoBase64;
+            closeDrawModal();
+        }
+
+
+        // ================= PDF EXPORT FUNCTIONALITY =================
+        function exportToPDF() {
+            const element = document.getElementById('report-document');
+
+            const filename = `List_of_Defect_${appState.houseNo || 'ครั้งที่3'}_${new Date().toISOString().slice(0,10)}.pdf`;
+
+            const opt = {
+                margin:       [8, 8, 8, 8],
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Temporary hide no-print inside PDF preview element if any
+            html2pdf().set(opt).from(element).save();
+        }
+
+
+        // ================= JSON BACKUP / IMPORT =================
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `Defect_Backup_${appState.houseNo || 'round3'}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function triggerImportJSON() {
+            document.getElementById('json-file-input').click();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.items)) {
+                        appState = parsed;
+                        loadSavedData();
+                        renderApp();
+                        alert("นำเข้าข้อมูลเรียบร้อยแล้ว");
+                    } else {
+                        alert("รูปแบบไฟล์ JSON ไม่ถูกต้อง");
+                    }
+                } catch (err) {
+                    alert("ไม่สามารถอ่านไฟล์ JSON ได้");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmResetData() {
+            if (confirm("ต้องการรีเซ็ตกลับเป็นข้อมูลตัวอย่างตั้งต้นหรือไม่?")) {
+                appState.items = DEFAULT_ITEMS;
+                saveData();
+                renderApp();
+            }
+        }
+
+
+        // Helper Utilities
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        // SVG Mock generators matching sample roof defect image
+        function createMockRoofImageSvg(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+
+            // Sky background
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(0, 0, 600, 400);
+
+            if (type === 'roof1') {
+                // Gable Roof Drawing
+                ctx.fillStyle = '#475569';
+                ctx.beginPath();
+                ctx.moveTo(100, 350);
+                ctx.lineTo(450, 100);
+                ctx.lineTo(550, 180);
+                ctx.lineTo(200, 400);
+                ctx.fill();
+
+                // House Wall
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(50, 200, 250, 180);
+                // Window
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(200, 250, 60, 60);
+
+                // Roof Tile Lines
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 3;
+                for(let i=0; i<8; i++){
+                    ctx.beginPath();
+                    ctx.moveTo(120 + i*40, 330 - i*25);
+                    ctx.lineTo(220 + i*40, 390 - i*25);
+                    ctx.stroke();
+                }
+
+                // Red Circle Markup for Defect
+                ctx.beginPath();
+                ctx.ellipse(450, 150, 30, 22, -0.2, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+            } else {
+                // Close-up Roof Tile Drawing
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(0, 0, 600, 400);
+
+                // Horizontal Tiles
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 4;
+                for (let y = 50; y < 400; y += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(600, y);
+                    ctx.stroke();
+
+                    // Tile wave lines
+                    for(let x=20; x<600; x+=80) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 15, 0, Math.PI);
+                        ctx.stroke();
+                    }
+                }
+
+                // Red Circle around misaligned tile
+                ctx.beginPath();
+                ctx.ellipse(240, 220, 50, 25, 0, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 7;
+                ctx.stroke();
+            }
+
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+    </script>
+</body>
+</html>
